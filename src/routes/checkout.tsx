@@ -138,7 +138,8 @@ function Checkout() {
   const navigate = useNavigate();
   const { items, subtotal, count, clear } = useCart();
   const [f, setF] = useState<FormState>({
-    email: "", name: "", phone: "", address: "", city: "", state: "", pincode: "",
+    email: "", name: "", phone: emptyPhoneValue("IN"),
+    address: "", city: "", state: "", pincode: "",
   });
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
   const [method, setMethod] = useState<PaymentMethod>("razorpay");
