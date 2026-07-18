@@ -34,7 +34,9 @@ export function CartDrawer() {
         ) : (
           <>
             <div className="flex-1 overflow-y-auto divide-y divide-border">
-              {items.map((it) => (
+              {items.map((it) => {
+                const atMax = typeof it.maxStock === "number" && it.quantity >= it.maxStock;
+                return (
                 <div key={it.id} className="p-5 flex gap-4">
                   <div className="w-20 h-24 shrink-0 bg-muted overflow-hidden">
                     <img src={it.image} alt={it.name} className="w-full h-full object-cover" />
@@ -49,15 +51,34 @@ export function CartDrawer() {
                     <p className="kicker mt-1 text-muted-foreground">Size {it.size} · {it.color}</p>
                     <div className="mt-3 flex items-center justify-between">
                       <div className="inline-flex items-center border border-border">
-                        <button onClick={() => updateQty(it.id, it.quantity - 1)} className="w-8 h-8 grid place-items-center hover:bg-foreground/5"><Minus className="w-3 h-3" strokeWidth={1.5} /></button>
+                        <button onClick={() => updateQty(it.id, it.quantity - 1)} disabled={it.quantity <= 1} className="w-8 h-8 grid place-items-center hover:bg-foreground/5 disabled:opacity-40 disabled:cursor-not-allowed"><Minus className="w-3 h-3" strokeWidth={1.5} /></button>
                         <span className="w-8 text-center font-mono text-sm">{it.quantity}</span>
-                        <button onClick={() => updateQty(it.id, it.quantity + 1)} className="w-8 h-8 grid place-items-center hover:bg-foreground/5"><Plus className="w-3 h-3" strokeWidth={1.5} /></button>
+                        <button
+                          onClick={() => {
+                            const r = updateQty(it.id, it.quantity + 1);
+                            if (!r.ok && r.available !== undefined) {
+                              // silent — button is disabled at max
+                            }
+                          }}
+                          disabled={atMax}
+                          className="w-8 h-8 grid place-items-center hover:bg-foreground/5 disabled:opacity-40 disabled:cursor-not-allowed"
+                          aria-label="Increase"
+                        >
+                          <Plus className="w-3 h-3" strokeWidth={1.5} />
+                        </button>
                       </div>
                       <p className="font-display text-lg">₹{(it.price * it.quantity).toLocaleString("en-IN")}</p>
                     </div>
+                    {atMax && (
+                      <p className="mt-1.5 font-mono text-[10px] tracking-wider uppercase text-ember">
+                        Max stock reached ({it.maxStock})
+                      </p>
+                    )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
+
             </div>
 
             <div className="border-t border-border p-6 space-y-4 bg-card/40">
