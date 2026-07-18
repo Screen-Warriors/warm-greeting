@@ -214,7 +214,7 @@ export function PhoneField({
             className={cn(
               "z-[100] w-[300px] max-w-[92vw] p-0 overflow-hidden rounded-md",
               // Fully opaque, layered dark surface — no bleed-through to fields below
-              "bg-[hsl(var(--card))] border border-border/80",
+              "bg-popover border border-border/80",
               "shadow-[0_24px_60px_-12px_rgba(0,0,0,0.75),0_8px_20px_-8px_rgba(0,0,0,0.6)]",
             )}
           >
