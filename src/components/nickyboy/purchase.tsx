@@ -135,7 +135,7 @@ export function PurchasePanel() {
                 <span className="font-display text-3xl">{PRODUCT.currency}{PRODUCT.price.toLocaleString("en-IN")}</span>
 
                 <span className="font-mono text-sm line-through text-muted-foreground">{PRODUCT.currency}{PRODUCT.compareAt.toLocaleString("en-IN")}</span>
-                <span className="ml-auto kicker text-ember">Save 24%</span>
+                <span className="ml-auto kicker text-ember">Save 75%</span>
               </div>
 
               {/* Color */}
