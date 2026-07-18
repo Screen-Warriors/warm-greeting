@@ -23,7 +23,7 @@ export const PRODUCT = {
   tagline: "The signature drop.",
   description:
     "A heavyweight garment-dyed crewneck in matte black with contrast bone-white ribbing. Hand-drawn anime silhouette and cryptic rune column screen-printed on the chest. Cut boxy, worn oversized.",
-  price: 2499,
+  price: 499,
   compareAt: 3299,
   currency: "₹",
   colors: [{ name: "Ink Black", value: "#0a0a0a" }] as const,
