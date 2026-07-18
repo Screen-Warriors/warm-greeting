@@ -24,9 +24,10 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   try {
-    const RZP_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID");
-    const RZP_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET");
+    const RZP_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID")?.trim();
+    const RZP_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")?.trim();
     if (!RZP_KEY_ID || !RZP_KEY_SECRET) return json({ error: "razorpay_not_configured" }, 500);
+    if (!RZP_KEY_ID.startsWith("rzp_")) return json({ error: "razorpay_key_id_invalid" }, 500);
 
     const body = (await req.json()) as Body;
     if (!body?.items?.length) return json({ error: "empty_cart" }, 400);
@@ -103,7 +104,22 @@ Deno.serve(async (req) => {
     const rzpJson = await rzpRes.json();
     if (!rzpRes.ok) {
       await admin.from("orders").update({ status: "failed" }).eq("id", order.id);
-      return json({ error: "razorpay_order_failed", detail: rzpJson }, 502);
+      const rzpError = rzpJson?.error ?? {};
+      const authFailed =
+        rzpRes.status === 401 ||
+        String(rzpError?.description ?? "").toLowerCase().includes("authentication failed");
+
+      return json({
+        error: authFailed ? "razorpay_auth_failed" : "razorpay_order_failed",
+        detail: {
+          code: rzpError?.code ?? `HTTP_${rzpRes.status}`,
+          description: rzpError?.description ?? "Razorpay order creation failed",
+          key_mode: RZP_KEY_ID.startsWith("rzp_test_") ? "test" : RZP_KEY_ID.startsWith("rzp_live_") ? "live" : "unknown",
+          fix: authFailed
+            ? "Update Supabase Edge Function secrets with a matching Razorpay key id and key secret from the same mode, then redeploy/retry."
+            : undefined,
+        },
+      }, authFailed ? 401 : 502);
     }
 
     await admin.from("orders")

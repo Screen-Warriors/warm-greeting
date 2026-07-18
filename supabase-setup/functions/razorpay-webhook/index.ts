@@ -8,7 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("method_not_allowed", { status: 405 });
 
-  const secret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET");
+  const secret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET")?.trim();
   if (!secret) return new Response("not_configured", { status: 500 });
 
   const signature = req.headers.get("x-razorpay-signature") ?? "";

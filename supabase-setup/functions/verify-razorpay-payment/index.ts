@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   try {
-    const secret = Deno.env.get("RAZORPAY_KEY_SECRET");
+    const secret = Deno.env.get("RAZORPAY_KEY_SECRET")?.trim();
     if (!secret) return json({ error: "razorpay_not_configured" }, 500);
 
     const b = (await req.json()) as Body;

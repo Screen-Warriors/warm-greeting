@@ -37,11 +37,15 @@ Add these three:
 
 | Name | Value |
 |---|---|
-| `RAZORPAY_KEY_ID` | `rzp_test_TF0Api7Y4G9ZY0` |
-| `RAZORPAY_KEY_SECRET` | `Dlxsm532hSZrpHLzNbLWfBrU` (rotate & swap when going live) |
+| `RAZORPAY_KEY_ID` | your Razorpay TEST Key ID, e.g. `rzp_test_...` |
+| `RAZORPAY_KEY_SECRET` | your matching Razorpay TEST Key Secret from the same generated key pair |
 | `RAZORPAY_WEBHOOK_SECRET` | pick any strong random string; you'll paste the same value into Razorpay in Step 4 |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are auto-injected — do not add them.
+
+If checkout shows `razorpay_auth_failed`, delete and re-add both Razorpay secrets.
+Most failures are caused by extra spaces copied into the secret, using a Live key
+with a Test secret, or using an old secret after Razorpay generated a new pair.
 
 ## Step 3 — Deploy the three Edge Functions (5 min)
 
