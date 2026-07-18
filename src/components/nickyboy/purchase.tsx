@@ -111,8 +111,8 @@ export function PurchasePanel() {
       productId: PRODUCT.id,
       name: PRODUCT.name,
       size,
-      color: PRODUCT.colors[0].name,
-      price: PRODUCT.price,
+      color: colors[0]?.name ?? PRODUCT.colors[0].name,
+      price,
       quantity: qty,
       image: IMAGES.front,
     });
