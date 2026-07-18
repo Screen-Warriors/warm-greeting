@@ -17,7 +17,7 @@ export const IMAGES = {
 export type Size = "S" | "M" | "L" | "XL" | "XXL";
 
 export const PRODUCT = {
-  id: "nicky-boy-crewneck-signature",
+  id: "a1b2c3d4-0001-4000-8000-000000000001",
   name: "NICKY BOY / Signature Crewneck",
   sku: "NB—001 / DROP.01",
   tagline: "The signature drop.",
