@@ -40,7 +40,10 @@ create table if not exists public.orders (
   id                    uuid primary key default gen_random_uuid(),
   customer_name         text not null,
   email                 text not null,
-  phone                 text not null,
+  phone                 text not null,                 -- legacy / full E.164 mirror
+  country_code          text,                          -- e.g. '+91'
+  phone_number          text,                          -- national digits only, e.g. '9876543210'
+  full_phone_number     text,                          -- E.164, e.g. '+919876543210'
   shipping_address      jsonb not null,
   items                 jsonb not null,
   sizes                 text,
