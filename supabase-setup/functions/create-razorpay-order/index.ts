@@ -87,7 +87,12 @@ Deno.serve(async (req) => {
         items: enrichedItems,
         sizes: sizesSummary,
         subtotal, shipping, total, currency,
+        cod_fee: 0,
+        discount: 0,
         status: "pending",
+        payment_method: "razorpay",
+        payment_status: "pending",
+        order_status: "pending",
       })
       .select("id")
       .single();
