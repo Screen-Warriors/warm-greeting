@@ -1,7 +1,6 @@
-// supabase/functions/create-razorpay-order/index.ts
-// Deploy: Dashboard → Edge Functions → Create function → paste this file.
-// Secrets required: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET,
-//                   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (auto-injected).
+// supabase/functions/create-cod-order/index.ts
+// Creates a Cash-on-Delivery order. No Razorpay involved.
+// Secrets required: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (auto-injected).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const cors = {
@@ -9,6 +8,8 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const COD_FEE = 50; // INR — configurable
 
 type Item = { product_id: string; size: string; quantity: number };
 type Body = {
@@ -24,11 +25,6 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   try {
-    const RZP_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID")?.trim();
-    const RZP_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")?.trim();
-    if (!RZP_KEY_ID || !RZP_KEY_SECRET) return json({ error: "razorpay_not_configured" }, 500);
-    if (!RZP_KEY_ID.startsWith("rzp_")) return json({ error: "razorpay_key_id_invalid" }, 500);
-
     const body = (await req.json()) as Body;
     if (!body?.items?.length) return json({ error: "empty_cart" }, 400);
     if (!body.customer?.name || !body.customer?.email || !body.customer?.phone)
@@ -42,7 +38,6 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } },
     );
 
-    // Server-side price recompute — never trust client totals.
     const ids = [...new Set(body.items.map((i) => i.product_id))];
     const { data: products, error: pErr } = await admin
       .from("products")
@@ -68,15 +63,14 @@ Deno.serve(async (req) => {
       });
     }
     const shipping = subtotal >= 2500 ? 0 : 99;
-    const total = subtotal + shipping;
+    const cod_fee = COD_FEE;
+    const total = subtotal + shipping + cod_fee;
     const currency = (products?.[0]?.currency as string) ?? "INR";
 
-    // Human-readable size summary for the dashboard column (e.g. "M × 1, XL × 2").
     const sizesSummary = enrichedItems
       .map((it) => `${it.size} × ${it.quantity}`)
       .join(", ");
 
-    // Insert pending order first so we always have a DB row that mirrors Razorpay.
     const { data: order, error: oErr } = await admin
       .from("orders")
       .insert({
@@ -86,64 +80,17 @@ Deno.serve(async (req) => {
         shipping_address: body.shipping,
         items: enrichedItems,
         sizes: sizesSummary,
-        subtotal, shipping, total, currency,
-        cod_fee: 0,
-        discount: 0,
+        subtotal, shipping, cod_fee, discount: 0, total, currency,
         status: "pending",
-        payment_method: "razorpay",
+        payment_method: "cod",
         payment_status: "pending",
-        order_status: "pending",
+        order_status: "confirmed",
       })
-      .select("id")
+      .select("id,customer_name,email,total,currency,items,shipping_address,status,payment_method,payment_status,order_status,cod_fee,shipping,subtotal,created_at")
       .single();
     if (oErr || !order) return json({ error: "order_insert_failed", detail: oErr?.message }, 500);
 
-    // Create Razorpay order (amount in paise for INR).
-    const rzpRes = await fetch("https://api.razorpay.com/v1/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Basic " + btoa(`${RZP_KEY_ID}:${RZP_KEY_SECRET}`),
-      },
-      body: JSON.stringify({
-        amount: total * 100,
-        currency,
-        receipt: order.id,
-        notes: { order_id: order.id, email: body.customer.email },
-      }),
-    });
-    const rzpJson = await rzpRes.json();
-    if (!rzpRes.ok) {
-      await admin.from("orders").update({ status: "failed" }).eq("id", order.id);
-      const rzpError = rzpJson?.error ?? {};
-      const authFailed =
-        rzpRes.status === 401 ||
-        String(rzpError?.description ?? "").toLowerCase().includes("authentication failed");
-
-      return json({
-        error: authFailed ? "razorpay_auth_failed" : "razorpay_order_failed",
-        detail: {
-          code: rzpError?.code ?? `HTTP_${rzpRes.status}`,
-          description: rzpError?.description ?? "Razorpay order creation failed",
-          key_mode: RZP_KEY_ID.startsWith("rzp_test_") ? "test" : RZP_KEY_ID.startsWith("rzp_live_") ? "live" : "unknown",
-          fix: authFailed
-            ? "Update Supabase Edge Function secrets with a matching Razorpay key id and key secret from the same mode, then redeploy/retry."
-            : undefined,
-        },
-      }, authFailed ? 401 : 502);
-    }
-
-    await admin.from("orders")
-      .update({ razorpay_order_id: rzpJson.id })
-      .eq("id", order.id);
-
-    return json({
-      order_id: order.id,
-      razorpay_order_id: rzpJson.id,
-      amount: rzpJson.amount,
-      currency: rzpJson.currency,
-      key_id: RZP_KEY_ID,
-    });
+    return json({ ok: true, order });
   } catch (e) {
     return json({ error: "server_error", detail: String(e) }, 500);
   }
