@@ -114,7 +114,7 @@ export function Hero() {
                 {PRODUCT.currency}{PRODUCT.compareAt.toLocaleString("en-IN")}
               </span>
               <span className="font-mono text-[10px] tracking-[0.24em] uppercase px-2 py-1 border border-ember/50 text-ember">
-                Save 24%
+                Save 75%
               </span>
             </motion.div>
 

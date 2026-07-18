@@ -24,7 +24,7 @@ export const PRODUCT = {
   description:
     "A heavyweight garment-dyed crewneck in matte black with contrast bone-white ribbing. Hand-drawn anime silhouette and cryptic rune column screen-printed on the chest. Cut boxy, worn oversized.",
   price: 499,
-  compareAt: 3299,
+  compareAt: 1999,
   currency: "₹",
   colors: [{ name: "Ink Black", value: "#0a0a0a" }] as const,
   sizes: ["S", "M", "L", "XL", "XXL"] satisfies Size[],
