@@ -1,24 +1,35 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Nav } from "@/components/nickyboy/nav";
+import { Hero } from "@/components/nickyboy/hero";
+import { Story, MarqueeBar } from "@/components/nickyboy/story";
+import { Gallery } from "@/components/nickyboy/gallery";
+import { PurchasePanel } from "@/components/nickyboy/purchase";
+import { Features } from "@/components/nickyboy/features";
+import { Reviews } from "@/components/nickyboy/reviews";
+import { Lookbook } from "@/components/nickyboy/lookbook";
+import { FaqSection } from "@/components/nickyboy/faq";
+import { Newsletter } from "@/components/nickyboy/newsletter";
+import { Footer } from "@/components/nickyboy/footer";
+import { CartDrawer } from "@/components/nickyboy/cart-drawer";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
-export const Route = createFileRoute("/")({
-  component: Index,
-});
+export const Route = createFileRoute("/")({ component: Index });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="min-h-screen bg-background text-foreground">
+      <Nav />
+      <Hero />
+      <MarqueeBar />
+      <Story />
+      <Gallery />
+      <PurchasePanel />
+      <Features />
+      <Reviews />
+      <Lookbook />
+      <FaqSection />
+      <Newsletter />
+      <Footer />
+      <CartDrawer />
+    </main>
   );
 }
