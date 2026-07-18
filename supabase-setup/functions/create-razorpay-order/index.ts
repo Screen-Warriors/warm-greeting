@@ -71,6 +71,11 @@ Deno.serve(async (req) => {
     const total = subtotal + shipping;
     const currency = (products?.[0]?.currency as string) ?? "INR";
 
+    // Human-readable size summary for the dashboard column (e.g. "M × 1, XL × 2").
+    const sizesSummary = enrichedItems
+      .map((it) => `${it.size} × ${it.quantity}`)
+      .join(", ");
+
     // Insert pending order first so we always have a DB row that mirrors Razorpay.
     const { data: order, error: oErr } = await admin
       .from("orders")
@@ -80,6 +85,7 @@ Deno.serve(async (req) => {
         phone: body.customer.phone,
         shipping_address: body.shipping,
         items: enrichedItems,
+        sizes: sizesSummary,
         subtotal, shipping, total, currency,
         status: "pending",
       })

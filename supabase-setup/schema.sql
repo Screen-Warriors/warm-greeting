@@ -42,6 +42,7 @@ create table if not exists public.orders (
   phone                 text not null,
   shipping_address      jsonb not null,
   items                 jsonb not null,
+  sizes                 text,
   subtotal              integer not null,
   shipping              integer not null default 0,
   total                 integer not null,
