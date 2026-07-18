@@ -157,3 +157,56 @@ on conflict (id) do update set
   stock_by_size = excluded.stock_by_size,
   is_active = excluded.is_active,
   updated_at = now();
+
+-- ---------- Atomic stock reserve/decrement ----------
+-- Called by Edge Functions (service_role) after a successful payment (or COD
+-- confirmation). Locks each product row, re-validates stock, and decrements
+-- the per-size counter in one transaction. Returns null on success, or a
+-- jsonb payload describing the first size that came up short so the caller
+-- can surface a clear error instead of overselling.
+create or replace function public.decrement_stock(_items jsonb)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  it jsonb;
+  pid uuid;
+  sz text;
+  qty int;
+  cur int;
+  next_stock jsonb;
+begin
+  for it in select * from jsonb_array_elements(_items) loop
+    pid := (it->>'product_id')::uuid;
+    sz  := it->>'size';
+    qty := coalesce((it->>'quantity')::int, 0);
+    if qty <= 0 then continue; end if;
+
+    -- Lock the product row for the duration of the transaction.
+    select coalesce((stock_by_size->>sz)::int, 0), stock_by_size
+      into cur, next_stock
+      from public.products
+      where id = pid
+      for update;
+
+    if cur is null or cur < qty then
+      return jsonb_build_object(
+        'error', 'insufficient_stock',
+        'product_id', pid,
+        'size', sz,
+        'available', coalesce(cur, 0)
+      );
+    end if;
+
+    update public.products
+      set stock_by_size = jsonb_set(next_stock, array[sz], to_jsonb(cur - qty)),
+          updated_at = now()
+      where id = pid;
+  end loop;
+  return null;
+end $$;
+
+revoke all on function public.decrement_stock(jsonb) from public, anon, authenticated;
+grant execute on function public.decrement_stock(jsonb) to service_role;

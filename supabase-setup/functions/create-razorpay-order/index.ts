@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       if (!p || !p.is_active) return json({ error: "product_unavailable", product_id: it.product_id }, 400);
       const stock = (p.stock_by_size as Record<string, number>)?.[it.size] ?? 0;
       if (!Number.isInteger(it.quantity) || it.quantity < 1) return json({ error: "bad_quantity" }, 400);
-      if (stock < it.quantity) return json({ error: "insufficient_stock", size: it.size }, 400);
+      if (stock < it.quantity) return json({ error: "insufficient_stock", size: it.size, available: stock }, 400);
       const line = (p.price as number) * it.quantity;
       subtotal += line;
       enrichedItems.push({

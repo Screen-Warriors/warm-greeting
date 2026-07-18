@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       if (!p || !p.is_active) return json({ error: "product_unavailable", product_id: it.product_id }, 400);
       const stock = (p.stock_by_size as Record<string, number>)?.[it.size] ?? 0;
       if (!Number.isInteger(it.quantity) || it.quantity < 1) return json({ error: "bad_quantity" }, 400);
-      if (stock < it.quantity) return json({ error: "insufficient_stock", size: it.size }, 400);
+      if (stock < it.quantity) return json({ error: "insufficient_stock", size: it.size, available: stock }, 400);
       const line = (p.price as number) * it.quantity;
       subtotal += line;
       enrichedItems.push({
@@ -88,6 +88,16 @@ Deno.serve(async (req) => {
     const sizesSummary = enrichedItems
       .map((it) => `${it.size} × ${it.quantity}`)
       .join(", ");
+
+    // Atomic per-size reservation. Prevents oversell on concurrent COD orders.
+    const { data: rpcRes, error: rpcErr } = await admin.rpc("decrement_stock", {
+      _items: body.items.map((i) => ({ product_id: i.product_id, size: i.size, quantity: i.quantity })),
+    });
+    if (rpcErr) return json({ error: "stock_reserve_failed", detail: rpcErr.message }, 500);
+    if (rpcRes && (rpcRes as { error?: string }).error === "insufficient_stock") {
+      const r = rpcRes as { size: string; available: number };
+      return json({ error: "insufficient_stock", size: r.size, available: r.available }, 400);
+    }
 
     const { data: order, error: oErr } = await admin
       .from("orders")
@@ -109,7 +119,13 @@ Deno.serve(async (req) => {
       })
       .select("id,customer_name,email,total,currency,items,shipping_address,status,payment_method,payment_status,order_status,cod_fee,shipping,subtotal,created_at")
       .single();
-    if (oErr || !order) return json({ error: "order_insert_failed", detail: oErr?.message }, 500);
+    if (oErr || !order) {
+      // Best-effort: try to release the reserved stock back.
+      await admin.rpc("decrement_stock", {
+        _items: body.items.map((i) => ({ product_id: i.product_id, size: i.size, quantity: -i.quantity })),
+      }).catch(() => {});
+      return json({ error: "order_insert_failed", detail: oErr?.message }, 500);
+    }
 
     return json({ ok: true, order });
   } catch (e) {
