@@ -49,7 +49,7 @@ export function Gallery() {
                 className={cn(spans[i], "group relative overflow-hidden bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ember", s.aspect)}
               >
                 <img src={s.src} alt={s.caption} loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]" />
+                  className="w-full h-full object-cover object-[50%_20%] transition-transform duration-[1200ms] ease-out group-hover:scale-[1.04]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
                 <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
                   <span className="kicker bg-background/70 backdrop-blur px-2 py-1">{s.label}</span>

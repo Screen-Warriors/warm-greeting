@@ -17,7 +17,7 @@ export function Hero() {
         <img
           src={IMAGES.hero}
           alt="Model wearing the NICKY BOY signature crewneck"
-          className="w-full h-full object-cover object-[center_30%] opacity-95"
+          className="w-full h-full object-cover object-[50%_15%] md:object-[50%_22%] opacity-95"
           fetchPriority="high"
         />
         {/* Vignette */}
