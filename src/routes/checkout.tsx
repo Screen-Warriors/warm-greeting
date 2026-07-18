@@ -227,7 +227,7 @@ function Checkout() {
       name: "NICKY BOY",
       description: "Signature Crewneck / Drop 001",
       order_id: created.razorpay_order_id,
-      prefill: { name: f.name, email: f.email, contact: f.phone },
+      prefill: { name: f.name, email: f.email, contact: f.phone.e164 },
       theme: { color: "#0A0A0A" },
       handler: async (r: RazorpayHandlerResponse) => {
         try {
