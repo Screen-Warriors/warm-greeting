@@ -125,14 +125,15 @@ export function PurchasePanel() {
                   <span className="w-1.5 h-1.5 rounded-full bg-ember animate-pulse" />
                   In stock · Drop 001
                 </p>
-                <h1 className="display-h text-4xl md:text-5xl leading-none">{PRODUCT.name}</h1>
+                <h1 className="display-h text-3xl md:text-4xl leading-none">{PRODUCT.name}</h1>
                 <p className="mt-3 kicker text-muted-foreground">{PRODUCT.sku}</p>
               </div>
 
               <p className="text-sm leading-relaxed text-foreground/80">{PRODUCT.description}</p>
 
               <div className="flex items-baseline gap-3 pt-4 border-t border-border">
-                <span className="font-display text-4xl">{PRODUCT.currency}{PRODUCT.price.toLocaleString("en-IN")}</span>
+                <span className="font-display text-3xl">{PRODUCT.currency}{PRODUCT.price.toLocaleString("en-IN")}</span>
+
                 <span className="font-mono text-sm line-through text-muted-foreground">{PRODUCT.currency}{PRODUCT.compareAt.toLocaleString("en-IN")}</span>
                 <span className="ml-auto kicker text-ember">Save 24%</span>
               </div>
