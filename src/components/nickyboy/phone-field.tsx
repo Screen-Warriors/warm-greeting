@@ -158,9 +158,8 @@ export function PhoneField({
     if (!value.national) return "";
     try {
       const ay = new AsYouType(value.country);
-      ay.input(`+${getCountryCallingCode(value.country)}${value.national}`);
-      // formatNational returns national spacing e.g. "98765 43210"
-      return ay.formatNational() || value.national;
+      // Feeding national digits produces nicely spaced national formatting.
+      return ay.input(value.national) || value.national;
     } catch {
       return value.national;
     }
