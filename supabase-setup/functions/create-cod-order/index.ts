@@ -94,7 +94,10 @@ Deno.serve(async (req) => {
       .insert({
         customer_name: body.customer.name,
         email: body.customer.email,
-        phone: body.customer.phone,
+        phone: body.customer.full_phone_number || body.customer.phone,
+        country_code: body.customer.country_code ?? null,
+        phone_number: body.customer.phone_number ?? null,
+        full_phone_number: body.customer.full_phone_number || body.customer.phone,
         shipping_address: body.shipping,
         items: enrichedItems,
         sizes: sizesSummary,
