@@ -163,7 +163,7 @@ function Checkout() {
   const formValid = Object.keys(errors).length === 0;
   const canPay = items.length > 0 && formValid;
 
-  const setField = (k: keyof FormState, v: string) => setF((p) => ({ ...p, [k]: v }));
+  const setField = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((p) => ({ ...p, [k]: v }));
   const touchAll = () =>
     setTouched({ email: true, name: true, phone: true, address: true, city: true, state: true, pincode: true });
 
