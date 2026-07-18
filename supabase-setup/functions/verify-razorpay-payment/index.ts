@@ -58,6 +58,19 @@ Deno.serve(async (req) => {
       .single();
     if (error || !data) return json({ error: "order_not_found" }, 404);
 
+    // Atomic per-size stock decrement. Best-effort: payment is already captured.
+    // If this fails we log via the response but still confirm the order so the
+    // customer sees success; ops can reconcile from the orders table.
+    try {
+      const items = (data.items as Array<{ product_id: string; size: string; quantity: number }>) ?? [];
+      const { data: rpcErr } = await admin.rpc("decrement_stock", { _items: items });
+      if (rpcErr) {
+        console.error("decrement_stock returned:", rpcErr);
+      }
+    } catch (e) {
+      console.error("decrement_stock threw:", e);
+    }
+
     return json({ ok: true, order: data });
   } catch (e) {
     return json({ error: "server_error", detail: String(e) }, 500);
