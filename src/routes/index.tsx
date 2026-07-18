@@ -26,6 +26,7 @@ function Index() {
       <PurchasePanel />
       <Reviews />
       <Story />
+      <MarqueeBar />
       <Gallery />
       <Features />
       <Lookbook />
@@ -34,7 +35,6 @@ function Index() {
       <Footer />
       <CartDrawer />
       <StickyMobileCTA />
-      <MarqueeBar />
     </main>
   );
 }
