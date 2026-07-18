@@ -10,6 +10,7 @@ import { PRODUCT } from "@/lib/product";
 import { cn } from "@/lib/utils";
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/integrations/supabase/client";
 import { loadRazorpay, openRazorpay, type RazorpayHandlerResponse } from "@/lib/razorpay";
+import { PhoneField, emptyPhoneValue, validatePhone, type PhoneValue } from "@/components/nickyboy/phone-field";
 
 export const Route = createFileRoute("/checkout")({ component: Checkout });
 
@@ -19,19 +20,22 @@ const COD_FEE = 50;
 type PaymentMethod = "razorpay" | "cod";
 
 type FormState = {
-  email: string; name: string; phone: string;
+  email: string; name: string; phone: PhoneValue;
   address: string; city: string; state: string; pincode: string;
 };
 
-type FieldError = Partial<Record<keyof FormState, string>>;
+type FieldError = {
+  email?: string; name?: string; phone?: string;
+  address?: string; city?: string; state?: string; pincode?: string;
+};
 
 function validate(f: FormState): FieldError {
   const e: FieldError = {};
   if (!f.email) e.email = "Required";
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Enter a valid email";
   if (!f.name.trim()) e.name = "Required";
-  if (!f.phone) e.phone = "Required";
-  else if (!/^(\+?\d{10,13})$/.test(f.phone)) e.phone = "10–13 digits";
+  const phoneErr = validatePhone(f.phone);
+  if (phoneErr) e.phone = phoneErr;
   if (!f.address.trim()) e.address = "Required";
   if (!f.city.trim()) e.city = "Required";
   if (!f.state.trim()) e.state = "Required";
@@ -134,7 +138,8 @@ function Checkout() {
   const navigate = useNavigate();
   const { items, subtotal, count, clear } = useCart();
   const [f, setF] = useState<FormState>({
-    email: "", name: "", phone: "", address: "", city: "", state: "", pincode: "",
+    email: "", name: "", phone: emptyPhoneValue("IN"),
+    address: "", city: "", state: "", pincode: "",
   });
   const [touched, setTouched] = useState<Partial<Record<keyof FormState, boolean>>>({});
   const [method, setMethod] = useState<PaymentMethod>("razorpay");
@@ -158,7 +163,7 @@ function Checkout() {
   const formValid = Object.keys(errors).length === 0;
   const canPay = items.length > 0 && formValid;
 
-  const setField = (k: keyof FormState, v: string) => setF((p) => ({ ...p, [k]: v }));
+  const setField = <K extends keyof FormState>(k: K, v: FormState[K]) => setF((p) => ({ ...p, [k]: v }));
   const touchAll = () =>
     setTouched({ email: true, name: true, phone: true, address: true, city: true, state: true, pincode: true });
 
@@ -187,7 +192,15 @@ function Checkout() {
 
   const orderPayload = () => ({
     items: items.map((i) => ({ product_id: i.productId, size: i.size, quantity: i.quantity })),
-    customer: { name: f.name, email: f.email, phone: f.phone },
+    customer: {
+      name: f.name,
+      email: f.email,
+      phone: f.phone.e164,
+      country_code: f.phone.countryCode,
+      phone_number: f.phone.national,
+      full_phone_number: f.phone.e164,
+      phone_country: f.phone.country,
+    },
     shipping: { address: f.address, city: f.city, state: f.state, pincode: f.pincode, country: "IN" },
   });
 
@@ -214,7 +227,7 @@ function Checkout() {
       name: "NICKY BOY",
       description: "Signature Crewneck / Drop 001",
       order_id: created.razorpay_order_id,
-      prefill: { name: f.name, email: f.email, contact: f.phone },
+      prefill: { name: f.name, email: f.email, contact: f.phone.e164 },
       theme: { color: "#0A0A0A" },
       handler: async (r: RazorpayHandlerResponse) => {
         try {
@@ -317,16 +330,17 @@ function Checkout() {
                   value={f.name} onChange={(v) => setField("name", v)}
                   onBlur={() => setTouched((t) => ({ ...t, name: true }))}
                   error={shownErrors.name} placeholder="Nicky Boy" />
-                <Field label="Phone" id="phone" type="tel" autoComplete="tel"
-                  value={f.phone} onChange={(v) => {
-                    const cleaned = v.replace(/[^\d+]/g, "");
-                    const normalized = cleaned.startsWith("+")
-                      ? "+" + cleaned.slice(1).replace(/\+/g, "").slice(0, 12)
-                      : cleaned.replace(/\+/g, "").slice(0, 10);
-                    setField("phone", normalized);
-                  }}
-                  onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
-                  error={shownErrors.phone} placeholder="+91" />
+                <div className="col-span-2">
+                  <PhoneField
+                    id="phone"
+                    label="Phone"
+                    value={f.phone}
+                    onChange={(v) => setField("phone", v)}
+                    onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
+                    touched={!!touched.phone}
+                    error={shownErrors.phone}
+                  />
+                </div>
                 <Field className="col-span-2" label="Address" id="address" autoComplete="street-address"
                   value={f.address} onChange={(v) => setField("address", v)}
                   onBlur={() => setTouched((t) => ({ ...t, address: true }))}

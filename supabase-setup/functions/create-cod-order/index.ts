@@ -14,11 +14,27 @@ const COD_FEE = 50; // INR — configurable
 type Item = { product_id: string; size: string; quantity: number };
 type Body = {
   items: Item[];
-  customer: { name: string; email: string; phone: string };
+  customer: {
+    name: string; email: string; phone: string;
+    country_code?: string; phone_number?: string;
+    full_phone_number?: string; phone_country?: string;
+  };
   shipping: {
     address: string; city: string; state: string; pincode: string; country?: string;
   };
 };
+
+function validatePhoneServer(c: Body["customer"]): string | null {
+  const full = (c.full_phone_number || c.phone || "").trim();
+  if (!/^\+\d{8,15}$/.test(full)) return "invalid_phone_format";
+  const cc = (c.country_code || "").trim();
+  const nat = (c.phone_number || "").trim();
+  if (cc && !/^\+\d{1,4}$/.test(cc)) return "invalid_country_code";
+  if (nat && !/^\d{4,15}$/.test(nat)) return "invalid_phone_number";
+  if (cc && nat && `${cc}${nat}` !== full) return "phone_mismatch";
+  if ((c.phone_country || "").toUpperCase() === "IN" && nat && nat.length !== 10) return "invalid_indian_phone";
+  return null;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -29,6 +45,8 @@ Deno.serve(async (req) => {
     if (!body?.items?.length) return json({ error: "empty_cart" }, 400);
     if (!body.customer?.name || !body.customer?.email || !body.customer?.phone)
       return json({ error: "missing_customer" }, 400);
+    const phoneErr = validatePhoneServer(body.customer);
+    if (phoneErr) return json({ error: phoneErr }, 400);
     if (!body.shipping?.address || !body.shipping?.city || !body.shipping?.state || !body.shipping?.pincode)
       return json({ error: "missing_shipping" }, 400);
 
@@ -76,7 +94,10 @@ Deno.serve(async (req) => {
       .insert({
         customer_name: body.customer.name,
         email: body.customer.email,
-        phone: body.customer.phone,
+        phone: body.customer.full_phone_number || body.customer.phone,
+        country_code: body.customer.country_code ?? null,
+        phone_number: body.customer.phone_number ?? null,
+        full_phone_number: body.customer.full_phone_number || body.customer.phone,
         shipping_address: body.shipping,
         items: enrichedItems,
         sizes: sizesSummary,
