@@ -186,7 +186,7 @@ export function PhoneField({
               type="button"
               aria-label={`Country: ${countryName(value.country)} ${value.countryCode}`}
               className={cn(
-                "flex items-center gap-1.5 pl-3 pr-2.5 w-[96px] shrink-0",
+                "flex items-center gap-1.5 pl-2.5 pr-2 min-w-[78px] shrink-0",
                 "border-r border-border/60 rounded-l-md",
                 "font-mono text-xs text-foreground/90 transition-colors outline-none",
                 "hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]",
@@ -196,10 +196,10 @@ export function PhoneField({
               <span className="text-[15px] leading-none" aria-hidden>
                 {flag(value.country)}
               </span>
-              <span className="tracking-tight">{value.countryCode}</span>
+              <span className="tracking-tight tabular-nums">{value.countryCode}</span>
               <ChevronDown
                 className={cn(
-                  "w-3 h-3 ml-auto text-foreground/50 transition-transform duration-200",
+                  "w-3 h-3 ml-0.5 text-foreground/50 transition-transform duration-200",
                   open && "rotate-180 text-ember",
                 )}
                 strokeWidth={1.8}
@@ -209,11 +209,13 @@ export function PhoneField({
 
           <PopoverContent
             align="start"
-            sideOffset={6}
+            sideOffset={8}
+            collisionPadding={12}
             className={cn(
-              "w-[320px] max-w-[92vw] p-0 overflow-hidden",
-              "bg-background/95 backdrop-blur-xl border-border/70",
-              "shadow-[0_20px_60px_-20px_rgba(0,0,0,0.85)]",
+              "z-[100] w-[300px] max-w-[92vw] p-0 overflow-hidden rounded-md",
+              // Fully opaque, layered dark surface — no bleed-through to fields below
+              "bg-[hsl(var(--card))] border border-border/80",
+              "shadow-[0_24px_60px_-12px_rgba(0,0,0,0.75),0_8px_20px_-8px_rgba(0,0,0,0.6)]",
             )}
           >
             <Command
@@ -224,26 +226,66 @@ export function PhoneField({
                 return val.toLowerCase().includes(s) ? 1 : 0;
               }}
             >
-              <div className="p-2 border-b border-border/60">
-                <CommandInput
-                  placeholder="Search country or code"
-                  className="h-9 font-mono text-xs placeholder:text-foreground/40"
-                />
-              </div>
+              {/* Sticky search — auto-focused by Radix Popover, visually separated */}
+              <CommandInput
+                placeholder="Search country or code"
+                className="h-10 font-mono text-xs placeholder:text-foreground/40 bg-transparent"
+              />
               <CommandList
                 className={cn(
-                  "max-h-[280px]",
+                  "max-h-[280px] py-1",
+                  // Thin, subtle themed scrollbar
                   "[scrollbar-width:thin]",
+                  "[scrollbar-color:hsl(var(--foreground)/0.18)_transparent]",
                   "[&::-webkit-scrollbar]:w-1.5",
                   "[&::-webkit-scrollbar-track]:bg-transparent",
                   "[&::-webkit-scrollbar-thumb]:bg-foreground/15",
                   "[&::-webkit-scrollbar-thumb]:rounded-full",
+                  "hover:[&::-webkit-scrollbar-thumb]:bg-foreground/25",
                 )}
               >
                 <CommandEmpty className="px-3 py-6 text-center text-xs text-muted-foreground font-mono">
                   No matches
                 </CommandEmpty>
-                <CommandGroup className="p-1">
+
+                {/* Pinned: currently selected */}
+                <CommandGroup
+                  heading="Selected"
+                  className="px-1 [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-2 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[9px] [&_[cmdk-group-heading]]:tracking-[0.22em] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:text-foreground/40"
+                >
+                  {(() => {
+                    const c = countries.find((x) => x.code === value.country);
+                    if (!c) return null;
+                    return (
+                      <CommandItem
+                        key={`sel-${c.code}`}
+                        value={`__selected__ ${c.name} ${c.code} ${c.calling}`}
+                        onSelect={() => selectCountry(c.code)}
+                        className={cn(
+                          "relative flex items-center gap-3 px-3 py-2 my-0.5 rounded-md cursor-pointer",
+                          "text-sm text-ember bg-ember/[0.08]",
+                          "aria-selected:bg-ember/[0.14] data-[selected=true]:bg-ember/[0.14]",
+                        )}
+                      >
+                        <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-ember rounded-full" />
+                        <span className="text-[15px] leading-none" aria-hidden>
+                          {flag(c.code)}
+                        </span>
+                        <span className="flex-1 truncate text-[13px]">{c.name}</span>
+                        <span className="font-mono text-[11px] tabular-nums">{c.calling}</span>
+                        <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={2} />
+                      </CommandItem>
+                    );
+                  })()}
+                </CommandGroup>
+
+                {/* Divider between selected + full list */}
+                <div className="h-px mx-2 my-1 bg-border/60" />
+
+                <CommandGroup
+                  heading="All countries"
+                  className="px-1 pb-1 [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-1 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[9px] [&_[cmdk-group-heading]]:tracking-[0.22em] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:text-foreground/40"
+                >
                   {countries.map((c) => {
                     const selected = c.code === value.country;
                     return (
@@ -252,21 +294,20 @@ export function PhoneField({
                         value={`${c.name} ${c.code} ${c.calling}`}
                         onSelect={() => selectCountry(c.code)}
                         className={cn(
-                          "relative flex items-center gap-3 px-3 py-2 rounded-sm cursor-pointer",
-                          "text-sm aria-selected:bg-foreground/[0.06] data-[selected=true]:bg-foreground/[0.06]",
+                          "relative flex items-center gap-3 px-3 py-2 my-0.5 rounded-md cursor-pointer",
+                          "text-sm text-foreground/90 transition-colors",
+                          "aria-selected:bg-foreground/[0.06] data-[selected=true]:bg-foreground/[0.06]",
+                          "aria-selected:text-foreground data-[selected=true]:text-foreground",
                           selected && "text-ember",
                         )}
                       >
-                        {selected && (
-                          <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-ember rounded-full" />
-                        )}
                         <span className="text-[15px] leading-none" aria-hidden>
                           {flag(c.code)}
                         </span>
                         <span
                           className={cn(
                             "flex-1 truncate text-[13px]",
-                            selected ? "text-ember" : "text-foreground/90",
+                            selected ? "text-ember" : "",
                           )}
                         >
                           {c.name}
