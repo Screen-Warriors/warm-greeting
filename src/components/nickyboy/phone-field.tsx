@@ -11,13 +11,12 @@ import {
 } from "libphonenumber-js";
 import { cn } from "@/lib/utils";
 
-// Flag emoji from ISO country code (regional indicator symbols)
+// ISO code -> flag emoji
 const flag = (cc: string) =>
   cc
     .toUpperCase()
     .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
 
-// Rough country name map — fallback to code if unknown
 let displayNames: Intl.DisplayNames | null = null;
 try {
   displayNames = new Intl.DisplayNames(["en"], { type: "region" });
@@ -26,7 +25,6 @@ try {
 }
 const countryName = (cc: string) => displayNames?.of(cc) ?? cc;
 
-// Detect default country from browser locale, fallback IN
 function detectCountry(): CountryCode {
   try {
     const langs = [navigator.language, ...(navigator.languages ?? [])];
@@ -44,10 +42,10 @@ function detectCountry(): CountryCode {
 }
 
 export type PhoneValue = {
-  country: CountryCode;      // e.g. "IN"
-  countryCode: string;       // e.g. "+91"
-  national: string;          // digits only, e.g. "9876543210"
-  e164: string;              // e.g. "+919876543210"
+  country: CountryCode;
+  countryCode: string;
+  national: string;
+  e164: string;
   valid: boolean;
 };
 
@@ -75,10 +73,7 @@ function buildValue(country: CountryCode, nationalDigits: string): PhoneValue {
   };
 }
 
-// Sensible max digits per country for hard-cap typing (India = 10)
 function maxNationalDigits(country: CountryCode): number {
-  // libphonenumber doesn't expose a direct "max digits". Use conservative caps.
-  // India strictly 10; most countries ≤ 12; a few (DE) up to 13. Cap at 15 (E.164 max minus CC).
   if (country === "IN") return 10;
   if (country === "US" || country === "CA") return 10;
   if (country === "GB") return 10;
@@ -104,10 +99,12 @@ export function PhoneField({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [activeIdx, setActiveIdx] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
-  // Auto-detect on first mount if country not set / default
+  // Auto-detect country on first mount if untouched
   useEffect(() => {
     if (!value.national && value.country === "IN") {
       const detected = detectCountry();
@@ -116,7 +113,7 @@ export function PhoneField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Close dropdown on outside click / Escape
+  // Outside click / Escape close
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
@@ -127,10 +124,11 @@ export function PhoneField({
     };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    setTimeout(() => searchRef.current?.focus(), 30);
+    const t = setTimeout(() => searchRef.current?.focus(), 40);
     return () => {
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
+      clearTimeout(t);
     };
   }, [open]);
 
@@ -149,16 +147,18 @@ export function PhoneField({
             c.code.toLowerCase().includes(q) ||
             c.calling.includes(q.replace(/[^\d+]/g, "")),
         );
-    // Sort: exact code match first, then alpha
     return filtered.sort((a, b) => a.name.localeCompare(b.name));
   }, [query]);
+
+  useEffect(() => {
+    setActiveIdx(0);
+  }, [query, open]);
 
   const cap = maxNationalDigits(value.country);
   const formatted = useMemo(() => {
     if (!value.national) return "";
     try {
       const ay = new AsYouType(value.country);
-      // Feeding national digits produces nicely spaced national formatting.
       return ay.input(value.national) || value.national;
     } catch {
       return value.national;
@@ -166,7 +166,6 @@ export function PhoneField({
   }, [value.country, value.national]);
 
   const handleDigits = (raw: string) => {
-    // strip everything except digits; drop leading zeros only when equal length would exceed cap
     const digits = raw.replace(/\D/g, "").slice(0, cap);
     onChange(buildValue(value.country, digits));
   };
@@ -174,14 +173,40 @@ export function PhoneField({
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const text = e.clipboardData.getData("text");
-    // Try full E.164 first — auto switch country if pasted
     const parsed = parsePhoneNumberFromString(text);
-    if (parsed && parsed.country && getCountries().includes(parsed.country as CountryCode)) {
+    if (parsed?.country && getCountries().includes(parsed.country as CountryCode)) {
       onChange(buildValue(parsed.country as CountryCode, parsed.nationalNumber));
       return;
     }
     handleDigits(text);
   };
+
+  const selectCountry = (code: CountryCode) => {
+    onChange(buildValue(code, value.national.slice(0, maxNationalDigits(code))));
+    setOpen(false);
+    setQuery("");
+  };
+
+  const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIdx((i) => Math.min(i + 1, countries.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const c = countries[activeIdx];
+      if (c) selectCountry(c.code as CountryCode);
+    }
+  };
+
+  // keep active row in view
+  useEffect(() => {
+    if (!open) return;
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-idx="${activeIdx}"]`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [activeIdx, open]);
 
   const showError = touched && !!error;
   const showSuccess = touched && !error && value.valid;
@@ -192,7 +217,8 @@ export function PhoneField({
       <div
         ref={wrapRef}
         className={cn(
-          "relative flex items-stretch w-full h-11 bg-background/40 backdrop-blur border rounded-md transition-all overflow-visible",
+          // Matches Field: h-11, bg-background/40, border, rounded-md
+          "relative flex items-stretch w-full h-11 bg-background/40 backdrop-blur border rounded-md transition-all",
           showError
             ? "border-destructive/70 focus-within:border-destructive focus-within:ring-2 focus-within:ring-destructive/20"
             : showSuccess
@@ -200,23 +226,35 @@ export function PhoneField({
               : "border-border/70 focus-within:border-ember focus-within:ring-2 focus-within:ring-ember/25 hover:border-border",
         )}
       >
-        {/* Country selector */}
+        {/* Country trigger — fixed compact width */}
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-label={`Country: ${countryName(value.country)}, calling code ${value.countryCode}`}
-          className="flex items-center gap-1.5 pl-3 pr-2 border-r border-border/70 font-mono text-sm text-foreground hover:bg-foreground/5 rounded-l-md transition-colors focus:outline-none focus:bg-foreground/5"
+          className={cn(
+            "flex items-center gap-1.5 pl-3 pr-2.5 w-[96px] shrink-0",
+            "border-r border-border/60 rounded-l-md",
+            "font-mono text-xs text-foreground/90 transition-colors",
+            "hover:bg-foreground/[0.04] focus:outline-none focus-visible:bg-foreground/[0.04]",
+            open && "bg-foreground/[0.05]",
+          )}
         >
-          <span className="text-base leading-none" aria-hidden>
+          <span className="text-[15px] leading-none" aria-hidden>
             {flag(value.country)}
           </span>
-          <span className="text-xs text-foreground/90">{value.countryCode}</span>
-          <ChevronDown className="w-3 h-3 text-foreground/60" strokeWidth={1.8} />
+          <span className="tracking-tight">{value.countryCode}</span>
+          <ChevronDown
+            className={cn(
+              "w-3 h-3 ml-auto text-foreground/50 transition-transform duration-200",
+              open && "rotate-180 text-ember",
+            )}
+            strokeWidth={1.8}
+          />
         </button>
 
-        {/* Number input */}
+        {/* Number input — inherits Field typography exactly */}
         <input
           id={id}
           type="tel"
@@ -228,12 +266,16 @@ export function PhoneField({
           onPaste={handlePaste}
           onBlur={onBlur}
           onBeforeInput={(e) => {
-            // Block emoji / letters at input level
             const nativeData = (e as unknown as { data?: string }).data;
             if (nativeData && /[^\d\s\-()]/.test(nativeData)) e.preventDefault();
           }}
           placeholder={value.country === "IN" ? "98765 43210" : "Phone number"}
-          className="flex-1 min-w-0 bg-transparent px-3 font-mono text-sm outline-none placeholder:text-foreground/30"
+          className={cn(
+            "flex-1 min-w-0 bg-transparent px-3.5 font-mono text-sm text-foreground",
+            "outline-none placeholder:text-foreground/30",
+            "appearance-none [-webkit-appearance:none] rounded-r-md",
+          )}
+          style={{ WebkitTapHighlightColor: "transparent" }}
         />
 
         {/* Success check */}
@@ -255,50 +297,103 @@ export function PhoneField({
         <AnimatePresence>
           {open && (
             <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-              className="absolute z-50 top-full left-0 mt-1.5 w-[300px] max-w-[92vw] rounded-lg border border-border/80 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden"
+              initial={{ opacity: 0, y: -6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.98 }}
+              transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+              className={cn(
+                "absolute z-50 top-[calc(100%+6px)] left-0 w-[320px] max-w-[92vw]",
+                "rounded-md border border-border/70 bg-background/95 backdrop-blur-xl",
+                "shadow-[0_20px_60px_-20px_rgba(0,0,0,0.85)] overflow-hidden",
+              )}
               role="listbox"
             >
-              <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60">
-                <Search className="w-3.5 h-3.5 text-foreground/60" strokeWidth={1.6} />
-                <input
-                  ref={searchRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search country or code"
-                  className="w-full bg-transparent outline-none text-sm placeholder:text-foreground/40"
-                />
+              {/* Sticky search — styled like other checkout inputs */}
+              <div className="p-2 border-b border-border/60 bg-background/80 backdrop-blur">
+                <div className="relative">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/50"
+                    strokeWidth={1.6}
+                  />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={onSearchKey}
+                    placeholder="Search country or code"
+                    className={cn(
+                      "w-full h-9 bg-background/40 border border-border/70 rounded-md",
+                      "pl-8 pr-3 font-mono text-xs text-foreground outline-none",
+                      "placeholder:text-foreground/40 transition-colors",
+                      "focus:border-ember focus:ring-2 focus:ring-ember/25",
+                    )}
+                  />
+                </div>
               </div>
-              <ul className="max-h-64 overflow-y-auto py-1">
+
+              <ul
+                ref={listRef}
+                className={cn(
+                  "max-h-[280px] overflow-y-auto py-1",
+                  "[scrollbar-width:thin]",
+                  "[&::-webkit-scrollbar]:w-1.5",
+                  "[&::-webkit-scrollbar-track]:bg-transparent",
+                  "[&::-webkit-scrollbar-thumb]:bg-foreground/15",
+                  "[&::-webkit-scrollbar-thumb]:rounded-full",
+                  "hover:[&::-webkit-scrollbar-thumb]:bg-foreground/25",
+                )}
+              >
                 {countries.length === 0 ? (
-                  <li className="px-3 py-3 text-xs text-muted-foreground font-mono">No matches</li>
+                  <li className="px-3 py-6 text-center text-xs text-muted-foreground font-mono">
+                    No matches
+                  </li>
                 ) : (
-                  countries.map((c) => {
+                  countries.map((c, idx) => {
                     const selected = c.code === value.country;
+                    const active = idx === activeIdx;
                     return (
                       <li key={c.code}>
                         <button
                           type="button"
-                          onClick={() => {
-                            onChange(buildValue(c.code as CountryCode, value.national.slice(0, maxNationalDigits(c.code as CountryCode))));
-                            setOpen(false);
-                            setQuery("");
-                          }}
+                          data-idx={idx}
+                          onClick={() => selectCountry(c.code as CountryCode)}
+                          onMouseEnter={() => setActiveIdx(idx)}
                           role="option"
                           aria-selected={selected}
                           className={cn(
-                            "w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-foreground/5 transition-colors",
-                            selected && "bg-ember/10",
+                            "w-full flex items-center gap-3 pl-3 pr-3.5 py-2 text-left",
+                            "text-sm transition-colors relative",
+                            active && "bg-foreground/[0.04]",
+                            selected && "text-ember",
                           )}
                         >
-                          <span className="text-base leading-none" aria-hidden>{flag(c.code)}</span>
-                          <span className="flex-1 truncate">{c.name}</span>
-                          <span className="font-mono text-xs text-foreground/60">{c.calling}</span>
-                          {selected && <Check className="w-3.5 h-3.5 text-ember" strokeWidth={2} />}
+                          {/* Selected indicator bar */}
+                          {selected && (
+                            <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] bg-ember rounded-full" />
+                          )}
+                          <span className="text-[15px] leading-none" aria-hidden>
+                            {flag(c.code)}
+                          </span>
+                          <span
+                            className={cn(
+                              "flex-1 truncate text-[13px]",
+                              selected ? "text-ember" : "text-foreground/90",
+                            )}
+                          >
+                            {c.name}
+                          </span>
+                          <span
+                            className={cn(
+                              "font-mono text-[11px] tabular-nums",
+                              selected ? "text-ember" : "text-foreground/50",
+                            )}
+                          >
+                            {c.calling}
+                          </span>
+                          {selected && (
+                            <Check className="w-3.5 h-3.5 text-ember shrink-0" strokeWidth={2} />
+                          )}
                         </button>
                       </li>
                     );
@@ -309,6 +404,7 @@ export function PhoneField({
           )}
         </AnimatePresence>
       </div>
+
       <AnimatePresence>
         {showError && (
           <motion.span
