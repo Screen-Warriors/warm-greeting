@@ -132,3 +132,49 @@
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-ember) 40%, transparent); }
   50% { box-shadow: 0 0 0 8px transparent; }
 }
+
+@keyframes soft-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@utility mask-reveal {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  & > span {
+    display: inline-block;
+    transform: translateY(105%);
+    animation: mask-reveal-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@keyframes mask-reveal-up {
+  to { transform: translateY(0); }
+}
+
+@utility btn-magnetic {
+  position: relative;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease, background-color 0.4s ease, color 0.4s ease;
+  will-change: transform;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px -12px color-mix(in oklab, var(--color-ember) 55%, transparent);
+  }
+  &:active { transform: translateY(0); }
+}
+
+@utility radial-lume {
+  background:
+    radial-gradient(60% 45% at 15% 25%, color-mix(in oklab, var(--color-ember) 22%, transparent), transparent 70%),
+    radial-gradient(50% 40% at 85% 80%, color-mix(in oklab, var(--color-bone) 6%, transparent), transparent 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
