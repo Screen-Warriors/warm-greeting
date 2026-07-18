@@ -10,6 +10,7 @@ import { PRODUCT } from "@/lib/product";
 import { cn } from "@/lib/utils";
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/integrations/supabase/client";
 import { loadRazorpay, openRazorpay, type RazorpayHandlerResponse } from "@/lib/razorpay";
+import { PhoneField, emptyPhoneValue, validatePhone, type PhoneValue } from "@/components/nickyboy/phone-field";
 
 export const Route = createFileRoute("/checkout")({ component: Checkout });
 
@@ -19,19 +20,22 @@ const COD_FEE = 50;
 type PaymentMethod = "razorpay" | "cod";
 
 type FormState = {
-  email: string; name: string; phone: string;
+  email: string; name: string; phone: PhoneValue;
   address: string; city: string; state: string; pincode: string;
 };
 
-type FieldError = Partial<Record<keyof FormState, string>>;
+type FieldError = {
+  email?: string; name?: string; phone?: string;
+  address?: string; city?: string; state?: string; pincode?: string;
+};
 
 function validate(f: FormState): FieldError {
   const e: FieldError = {};
   if (!f.email) e.email = "Required";
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Enter a valid email";
   if (!f.name.trim()) e.name = "Required";
-  if (!f.phone) e.phone = "Required";
-  else if (!/^(\+?\d{10,13})$/.test(f.phone)) e.phone = "10–13 digits";
+  const phoneErr = validatePhone(f.phone);
+  if (phoneErr) e.phone = phoneErr;
   if (!f.address.trim()) e.address = "Required";
   if (!f.city.trim()) e.city = "Required";
   if (!f.state.trim()) e.state = "Required";
