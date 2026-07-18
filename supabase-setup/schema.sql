@@ -31,6 +31,7 @@ create policy "public read active products" on public.products
   for select to anon, authenticated using (is_active = true);
 
 -- ---------- ORDERS ----------
+-- Legacy enum kept for back-compat with existing `status` column.
 do $$ begin
   create type public.order_status as enum ('pending','paid','failed','cancelled');
 exception when duplicate_object then null; end $$;
@@ -45,17 +46,32 @@ create table if not exists public.orders (
   sizes                 text,
   subtotal              integer not null,
   shipping              integer not null default 0,
+  discount              integer not null default 0,
+  cod_fee               integer not null default 0,
   total                 integer not null,
   currency              text not null default 'INR',
   status                public.order_status not null default 'pending',
+  payment_method        text not null default 'razorpay',   -- 'razorpay' | 'cod'
+  payment_status        text not null default 'pending',    -- 'paid' | 'pending' | 'failed'
+  order_status          text not null default 'pending',    -- 'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled'|'returned'
   razorpay_order_id     text unique,
   razorpay_payment_id   text,
   razorpay_signature    text,
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now()
 );
+
+-- Idempotent column adds for existing databases.
+alter table public.orders add column if not exists discount integer not null default 0;
+alter table public.orders add column if not exists cod_fee integer not null default 0;
+alter table public.orders add column if not exists payment_method text not null default 'razorpay';
+alter table public.orders add column if not exists payment_status text not null default 'pending';
+alter table public.orders add column if not exists order_status text not null default 'pending';
+
 create index if not exists orders_razorpay_order_id_idx on public.orders(razorpay_order_id);
 create index if not exists orders_email_idx on public.orders(email);
+create index if not exists orders_payment_method_idx on public.orders(payment_method);
+create index if not exists orders_order_status_idx on public.orders(order_status);
 
 -- Fully sealed from the client. Only Edge Functions (service_role) touch this table.
 grant all on public.orders to service_role;
