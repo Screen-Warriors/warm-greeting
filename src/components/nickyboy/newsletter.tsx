@@ -2,24 +2,30 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Newsletter() {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       toast.error("Enter a valid email.");
       return;
     }
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setDone(true);
-      toast.success("You're on the list. Watch your inbox.");
-    }, 700);
+    const { error } = await supabase
+      .from("newsletter_signups")
+      .insert({ email: email.trim().toLowerCase() });
+    setSubmitting(false);
+    if (error && !/duplicate|unique/i.test(error.message)) {
+      toast.error("Couldn't sign you up. Try again.");
+      return;
+    }
+    setDone(true);
+    toast.success("You're on the list. Watch your inbox.");
   };
 
   return (

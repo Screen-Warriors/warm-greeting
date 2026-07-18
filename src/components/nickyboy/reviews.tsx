@@ -2,9 +2,11 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Star, PenLine } from "lucide-react";
 import { REVIEWS } from "@/lib/product";
+import { PRODUCT } from "@/lib/product";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 
 function Stars({ n, size = "sm" }: { n: number; size?: "sm" | "lg" }) {
   return (
@@ -24,19 +26,26 @@ function WriteReview() {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    if (!form.get("name") || !form.get("comment")) {
-      toast.error("Add your name and review.");
-      return;
-    }
+    const name = String(form.get("name") ?? "").trim();
+    const comment = String(form.get("comment") ?? "").trim();
+    if (!name || !comment) { toast.error("Add your name and review."); return; }
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setOpen(false);
-      toast.success("Thanks — your review is queued for moderation.");
-    }, 800);
+    const { error } = await supabase.from("reviews").insert({
+      product_id: PRODUCT.id,
+      reviewer_name: name,
+      city: String(form.get("city") ?? "").trim() || null,
+      rating,
+      title: String(form.get("title") ?? "").trim() || null,
+      comment,
+      is_approved: false,
+    });
+    setSubmitting(false);
+    if (error) { toast.error("Couldn't submit. Try again."); return; }
+    setOpen(false);
+    toast.success("Thanks — your review is queued for moderation.");
   };
 
   return (

@@ -6,8 +6,12 @@ import { toast } from "sonner";
 import { useCart } from "@/lib/cart-store";
 import { PRODUCT } from "@/lib/product";
 import { cn } from "@/lib/utils";
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "@/integrations/supabase/client";
+import { loadRazorpay, openRazorpay, type RazorpayHandlerResponse } from "@/lib/razorpay";
 
 export const Route = createFileRoute("/checkout")({ component: Checkout });
+
+const RZP_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID as string;
 
 function Field({
   label, id, type = "text", value, onChange, placeholder, autoComplete, className,
@@ -19,12 +23,9 @@ function Field({
     <label htmlFor={id} className={cn("block", className)}>
       <span className="kicker block mb-1.5">{label}</span>
       <input
-        id={id}
-        type={type}
-        value={value}
+        id={id} type={type} value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
+        placeholder={placeholder} autoComplete={autoComplete}
         className="w-full h-10 bg-transparent border border-border focus:border-ember outline-none px-3 font-mono text-sm transition-colors"
       />
     </label>
@@ -38,6 +39,7 @@ function Checkout() {
     email: "", name: "", phone: "", address: "", city: "", state: "", pincode: "",
   });
   const [paying, setPaying] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const shipping = subtotal >= 2500 ? 0 : 99;
   const total = subtotal + shipping;
@@ -46,22 +48,103 @@ function Checkout() {
     items.length > 0 && f.email && f.name && f.phone.length >= 10 &&
     f.address && f.city && f.state && f.pincode.length === 6;
 
-  const pay = () => {
+  const invokeFn = async <T,>(name: string, body: unknown): Promise<T> => {
+    // Direct fetch (not supabase.functions.invoke) so we can send the raw
+    // publishable key without any Authorization header wrangling.
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(body),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(json?.error ?? `request_failed_${res.status}`);
+    }
+    return json as T;
+  };
+
+  const pay = async () => {
     if (!canPay) { toast.error("Fill all shipping fields."); return; }
+    setErrorMsg(null);
     setPaying(true);
-    // Razorpay wiring lands with Cloud in the next phase.
-    setTimeout(() => {
+
+    try {
+      await loadRazorpay();
+
+      const created = await invokeFn<{
+        order_id: string;
+        razorpay_order_id: string;
+        amount: number;
+        currency: string;
+        key_id: string;
+      }>("create-razorpay-order", {
+        items: items.map((i) => ({
+          product_id: i.productId, size: i.size, quantity: i.quantity,
+        })),
+        customer: { name: f.name, email: f.email, phone: f.phone },
+        shipping: {
+          address: f.address, city: f.city, state: f.state,
+          pincode: f.pincode, country: "IN",
+        },
+      });
+
+      openRazorpay({
+        key: created.key_id || RZP_KEY_ID,
+        amount: created.amount,
+        currency: created.currency,
+        name: "NICKY BOY",
+        description: "Signature Crewneck / Drop 001",
+        order_id: created.razorpay_order_id,
+        prefill: { name: f.name, email: f.email, contact: f.phone },
+        theme: { color: "#0A0A0A" },
+        handler: async (r: RazorpayHandlerResponse) => {
+          try {
+            const verified = await invokeFn<{ ok: boolean; order: { id: string } }>(
+              "verify-razorpay-payment",
+              r,
+            );
+            if (!verified?.ok) throw new Error("verify_failed");
+            // Stash a minimal receipt for the confirmation view; the sealed
+            // orders table isn't readable from the client.
+            sessionStorage.setItem(
+              `nb_order_${verified.order.id}`,
+              JSON.stringify({
+                order: verified.order,
+                shipping: { address: f.address, city: f.city, state: f.state, pincode: f.pincode },
+              }),
+            );
+            clear();
+            navigate({ to: "/order/$orderId", params: { orderId: verified.order.id } });
+          } catch (err) {
+            setErrorMsg("We received your payment but couldn't confirm it here. Our team will verify shortly.");
+            toast.error("Verification failed — we're on it.");
+          } finally {
+            setPaying(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setPaying(false);
+            setErrorMsg("Payment cancelled. You can try again anytime.");
+            toast("Payment cancelled.");
+          },
+        },
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErrorMsg(`Could not start payment (${msg}).`);
+      toast.error("Could not start payment.");
       setPaying(false);
-      clear();
-      toast.success("Payment simulated — order placed.");
-      navigate({ to: "/" });
-    }, 1200);
+    }
   };
 
   return (
     <main className="min-h-screen bg-background text-foreground grain">
       <div className="mx-auto max-w-[1200px] px-5 md:px-10 py-6 md:py-8">
-        {/* Header row */}
         <div className="flex items-center justify-between mb-6">
           <Link to="/" className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.28em] uppercase text-foreground/70 hover:text-foreground">
             <ArrowLeft className="w-3.5 h-3.5" strokeWidth={1.5} /> Back
@@ -76,12 +159,9 @@ function Checkout() {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           className="grid grid-cols-12 gap-5 md:gap-8"
         >
-          {/* Form */}
           <div className="col-span-12 lg:col-span-7 space-y-5">
             <div>
               <p className="kicker mb-1"><span className="text-ember">◆</span> Step 01</p>
@@ -94,7 +174,7 @@ function Checkout() {
               <Field label="Full name" id="name" autoComplete="name"
                 value={f.name} onChange={(v) => setF({ ...f, name: v })} placeholder="Nicky Boy" />
               <Field label="Phone" id="phone" type="tel" autoComplete="tel"
-                value={f.phone} onChange={(v) => setF({ ...f, phone: v })} placeholder="+91" />
+                value={f.phone} onChange={(v) => setF({ ...f, phone: v.replace(/[^\d+]/g, "") })} placeholder="+91" />
               <Field className="col-span-2" label="Address" id="address" autoComplete="street-address"
                 value={f.address} onChange={(v) => setF({ ...f, address: v })} placeholder="Street, apt, landmark" />
               <Field label="City" id="city" autoComplete="address-level2"
@@ -117,10 +197,14 @@ function Checkout() {
                 </div>
                 <span className="kicker text-ember">Selected</span>
               </div>
+              {errorMsg && (
+                <p className="mt-3 font-mono text-[11px] text-destructive border border-destructive/40 p-2.5">
+                  {errorMsg}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Summary */}
           <aside className="col-span-12 lg:col-span-5">
             <div className="lg:sticky lg:top-6 border border-border bg-card/40 backdrop-blur p-5 space-y-4">
               <div className="flex items-baseline justify-between">
@@ -174,10 +258,10 @@ function Checkout() {
                   canPay && !paying ? "bg-ember text-ink hover:brightness-110" : "bg-muted text-muted-foreground cursor-not-allowed"
                 )}
               >
-                {paying ? "Processing…" : `Pay ${PRODUCT.currency}${total.toLocaleString("en-IN")}`}
+                {paying ? "Opening Razorpay…" : `Pay ${PRODUCT.currency}${total.toLocaleString("en-IN")}`}
               </button>
               <p className="font-mono text-[10px] text-muted-foreground text-center">
-                Payments secured by Razorpay. Live gateway wires up with Cloud.
+                Payments secured by Razorpay. INR only.
               </p>
             </div>
           </aside>
@@ -186,3 +270,7 @@ function Checkout() {
     </main>
   );
 }
+
+// Prevent "unused import" build failure — supabase client is imported for
+// potential future use (e.g. subscribing to order status). Retain the import.
+void supabase;
