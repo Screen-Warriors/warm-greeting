@@ -184,6 +184,15 @@ function Checkout() {
           "Razorpay rejected the API credentials saved in Supabase. Re-save a matching TEST Key ID and TEST Secret in Edge Function secrets, then retry.",
         );
       }
+      if (json?.error === "insufficient_stock") {
+        const size = json?.size ?? "";
+        const available = typeof json?.available === "number" ? json.available : null;
+        throw new Error(
+          available !== null
+            ? `Sorry, only ${available} left in size ${size} — please update your quantity.`
+            : `Sorry, size ${size} just sold out. Please update your quantity.`,
+        );
+      }
       const detail = typeof json?.detail?.description === "string" ? `: ${json.detail.description}` : "";
       throw new Error(`${json?.error ?? `request_failed_${res.status}`}${detail}`);
     }
