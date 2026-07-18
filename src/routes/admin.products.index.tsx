@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatINR } from "@/lib/admin-csv";
 
-export const Route = createFileRoute("/admin/products")({ component: ProductsPage });
+export const Route = createFileRoute("/admin/products/")({ component: ProductsPage });
 
 function ProductsPage() {
   const { data, isLoading } = useQuery({
