@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Minus, Plus, ShieldCheck, Truck, RefreshCw, Ruler, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCart } from "@/lib/cart-store";
 import { PRODUCT, SIZE_CHART, IMAGES, type Size } from "@/lib/product";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 function SizeGuideModal() {
@@ -55,11 +57,47 @@ function SizeGuideModal() {
 
 export function PurchasePanel() {
   const { add, setOpen } = useCart();
+
+  // Live product from Supabase (sizes / colors / stock / price). Falls back to
+  // static PRODUCT constants for copy, images, and when the network is down.
+  const { data: live } = useQuery({
+    queryKey: ["storefront", "product", PRODUCT.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("price,compare_at_price,sizes,colors,stock_by_size")
+        .eq("id", PRODUCT.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+  const sizes = useMemo<Size[]>(() => {
+    const s = (live?.sizes as string[] | undefined);
+    return (s && s.length ? s : PRODUCT.sizes) as Size[];
+  }, [live]);
+  const stockBySize = useMemo<Record<string, number>>(() => {
+    return (live?.stock_by_size as Record<string, number> | undefined) ?? PRODUCT.stockBySize;
+  }, [live]);
+  const colors = useMemo(() => {
+    const raw = (live?.colors as unknown[] | undefined) ?? PRODUCT.colors;
+    return raw.map((c) => {
+      if (typeof c === "string") return { name: c, value: "#0a0a0a" };
+      const o = c as { name?: string; value?: string };
+      return { name: o.name ?? "", value: o.value ?? "#0a0a0a" };
+    }).filter((c) => c.name);
+  }, [live]);
+  const price = Number(live?.price ?? PRODUCT.price);
+  const compareAt = Number(live?.compare_at_price ?? PRODUCT.compareAt);
+  const discountPct = compareAt > price ? Math.round(((compareAt - price) / compareAt) * 100) : 0;
+
   const [size, setSize] = useState<Size | null>(null);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
 
-  const stockForSize = size ? PRODUCT.stockBySize[size] : null;
+  const stockForSize = size ? Number(stockBySize[size] ?? 0) : null;
   const outOfStock = stockForSize === 0;
 
   const handleAdd = (buyNow = false) => {
@@ -73,8 +111,8 @@ export function PurchasePanel() {
       productId: PRODUCT.id,
       name: PRODUCT.name,
       size,
-      color: PRODUCT.colors[0].name,
-      price: PRODUCT.price,
+      color: colors[0]?.name ?? PRODUCT.colors[0].name,
+      price,
       quantity: qty,
       image: IMAGES.front,
     });
@@ -132,31 +170,37 @@ export function PurchasePanel() {
               <p className="text-sm leading-relaxed text-foreground/80">{PRODUCT.description}</p>
 
               <div className="flex items-baseline gap-3 pt-4 border-t border-border">
-                <span className="font-display text-3xl">{PRODUCT.currency}{PRODUCT.price.toLocaleString("en-IN")}</span>
-
-                <span className="font-mono text-sm line-through text-muted-foreground">{PRODUCT.currency}{PRODUCT.compareAt.toLocaleString("en-IN")}</span>
-                <span className="ml-auto kicker text-ember">Save 75%</span>
+                <span className="font-display text-3xl">{PRODUCT.currency}{price.toLocaleString("en-IN")}</span>
+                {compareAt > price && (
+                  <>
+                    <span className="font-mono text-sm line-through text-muted-foreground">{PRODUCT.currency}{compareAt.toLocaleString("en-IN")}</span>
+                    <span className="ml-auto kicker text-ember">Save {discountPct}%</span>
+                  </>
+                )}
               </div>
 
               {/* Color */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="kicker">Colour</p>
-                  <p className="font-mono text-xs">{PRODUCT.colors[0].name}</p>
+              {colors.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="kicker">Colour</p>
+                    <p className="font-mono text-xs">{colors[0].name}</p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {colors.map((c) => (
+                      <button
+                        key={c.name}
+                        className="relative w-10 h-10 border border-ember ring-1 ring-inset ring-background"
+                        style={{ background: c.value }}
+                        aria-label={c.name}
+                        title={c.name}
+                      >
+                        <Check className="w-3 h-3 text-ember absolute -top-1 -right-1 bg-background rounded-full p-0.5" strokeWidth={2} />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  {PRODUCT.colors.map((c) => (
-                    <button
-                      key={c.name}
-                      className="relative w-10 h-10 border border-ember ring-1 ring-inset ring-background"
-                      style={{ background: c.value }}
-                      aria-label={c.name}
-                    >
-                      <Check className="w-3 h-3 text-ember absolute -top-1 -right-1 bg-background rounded-full p-0.5" strokeWidth={2} />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
 
               {/* Size */}
               <div>
@@ -165,8 +209,8 @@ export function PurchasePanel() {
                   <SizeGuideModal />
                 </div>
                 <div className="grid grid-cols-5 gap-2">
-                  {PRODUCT.sizes.map((s) => {
-                    const stk = PRODUCT.stockBySize[s];
+                  {sizes.map((s) => {
+                    const stk = Number(stockBySize[s] ?? 0);
                     const dis = stk === 0;
                     const active = size === s;
                     return (
