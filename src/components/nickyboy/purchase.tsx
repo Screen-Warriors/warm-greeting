@@ -57,11 +57,47 @@ function SizeGuideModal() {
 
 export function PurchasePanel() {
   const { add, setOpen } = useCart();
+
+  // Live product from Supabase (sizes / colors / stock / price). Falls back to
+  // static PRODUCT constants for copy, images, and when the network is down.
+  const { data: live } = useQuery({
+    queryKey: ["storefront", "product", PRODUCT.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("price,compare_at_price,sizes,colors,stock_by_size")
+        .eq("id", PRODUCT.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+  const sizes = useMemo<Size[]>(() => {
+    const s = (live?.sizes as string[] | undefined);
+    return (s && s.length ? s : PRODUCT.sizes) as Size[];
+  }, [live]);
+  const stockBySize = useMemo<Record<string, number>>(() => {
+    return (live?.stock_by_size as Record<string, number> | undefined) ?? PRODUCT.stockBySize;
+  }, [live]);
+  const colors = useMemo(() => {
+    const raw = (live?.colors as unknown[] | undefined) ?? PRODUCT.colors;
+    return raw.map((c) => {
+      if (typeof c === "string") return { name: c, value: "#0a0a0a" };
+      const o = c as { name?: string; value?: string };
+      return { name: o.name ?? "", value: o.value ?? "#0a0a0a" };
+    }).filter((c) => c.name);
+  }, [live]);
+  const price = Number(live?.price ?? PRODUCT.price);
+  const compareAt = Number(live?.compare_at_price ?? PRODUCT.compareAt);
+  const discountPct = compareAt > price ? Math.round(((compareAt - price) / compareAt) * 100) : 0;
+
   const [size, setSize] = useState<Size | null>(null);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
 
-  const stockForSize = size ? PRODUCT.stockBySize[size] : null;
+  const stockForSize = size ? Number(stockBySize[size] ?? 0) : null;
   const outOfStock = stockForSize === 0;
 
   const handleAdd = (buyNow = false) => {
