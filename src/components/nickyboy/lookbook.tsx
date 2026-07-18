@@ -37,7 +37,7 @@ export function Lookbook() {
             >
               <div className="aspect-[3/4] overflow-hidden bg-muted relative">
                 <img src={l.src} alt={l.caption} loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-[1200ms] group-hover:scale-105" />
+                  className="w-full h-full object-cover object-[50%_20%] transition-transform duration-[1200ms] group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent opacity-40 group-hover:opacity-70 transition-opacity" />
                 <span className="absolute top-4 left-4 kicker bg-background/70 px-2 py-1 backdrop-blur">Look 0{i + 1}</span>
               </div>
