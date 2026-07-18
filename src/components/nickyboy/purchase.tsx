@@ -170,31 +170,37 @@ export function PurchasePanel() {
               <p className="text-sm leading-relaxed text-foreground/80">{PRODUCT.description}</p>
 
               <div className="flex items-baseline gap-3 pt-4 border-t border-border">
-                <span className="font-display text-3xl">{PRODUCT.currency}{PRODUCT.price.toLocaleString("en-IN")}</span>
-
-                <span className="font-mono text-sm line-through text-muted-foreground">{PRODUCT.currency}{PRODUCT.compareAt.toLocaleString("en-IN")}</span>
-                <span className="ml-auto kicker text-ember">Save 75%</span>
+                <span className="font-display text-3xl">{PRODUCT.currency}{price.toLocaleString("en-IN")}</span>
+                {compareAt > price && (
+                  <>
+                    <span className="font-mono text-sm line-through text-muted-foreground">{PRODUCT.currency}{compareAt.toLocaleString("en-IN")}</span>
+                    <span className="ml-auto kicker text-ember">Save {discountPct}%</span>
+                  </>
+                )}
               </div>
 
               {/* Color */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="kicker">Colour</p>
-                  <p className="font-mono text-xs">{PRODUCT.colors[0].name}</p>
+              {colors.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="kicker">Colour</p>
+                    <p className="font-mono text-xs">{colors[0].name}</p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {colors.map((c) => (
+                      <button
+                        key={c.name}
+                        className="relative w-10 h-10 border border-ember ring-1 ring-inset ring-background"
+                        style={{ background: c.value }}
+                        aria-label={c.name}
+                        title={c.name}
+                      >
+                        <Check className="w-3 h-3 text-ember absolute -top-1 -right-1 bg-background rounded-full p-0.5" strokeWidth={2} />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  {PRODUCT.colors.map((c) => (
-                    <button
-                      key={c.name}
-                      className="relative w-10 h-10 border border-ember ring-1 ring-inset ring-background"
-                      style={{ background: c.value }}
-                      aria-label={c.name}
-                    >
-                      <Check className="w-3 h-3 text-ember absolute -top-1 -right-1 bg-background rounded-full p-0.5" strokeWidth={2} />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              )}
 
               {/* Size */}
               <div>
@@ -203,8 +209,8 @@ export function PurchasePanel() {
                   <SizeGuideModal />
                 </div>
                 <div className="grid grid-cols-5 gap-2">
-                  {PRODUCT.sizes.map((s) => {
-                    const stk = PRODUCT.stockBySize[s];
+                  {sizes.map((s) => {
+                    const stk = Number(stockBySize[s] ?? 0);
                     const dis = stk === 0;
                     const active = size === s;
                     return (
