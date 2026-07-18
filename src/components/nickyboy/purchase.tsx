@@ -265,45 +265,72 @@ export function PurchasePanel() {
 
               {/* Quantity */}
               <div>
-                <p className="kicker mb-3">Quantity</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="kicker">Quantity</p>
+                  {size && remaining !== null && (
+                    <p className="font-mono text-[10px] tracking-wider uppercase text-muted-foreground">
+                      {inCartForSize > 0
+                        ? `${remaining} more available`
+                        : `${maxAddable} max`}
+                    </p>
+                  )}
+                </div>
                 <div className="inline-flex items-center border border-border">
-                  <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="w-11 h-11 grid place-items-center hover:bg-foreground/5" aria-label="Decrease">
+                  <button onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} className="w-11 h-11 grid place-items-center hover:bg-foreground/5 disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Decrease">
                     <Minus className="w-3.5 h-3.5" strokeWidth={1.5} />
                   </button>
                   <span className="w-12 text-center font-mono">{qty}</span>
-                  <button onClick={() => setQty((q) => q + 1)} className="w-11 h-11 grid place-items-center hover:bg-foreground/5" aria-label="Increase">
+                  <button
+                    onClick={() => {
+                      if (!canIncrement) {
+                        if (size) setStockMsg(`Only ${stockForSize} in stock in ${size}${inCartForSize > 0 ? ` — ${inCartForSize} already in your bag` : ""}.`);
+                        return;
+                      }
+                      setStockMsg(null);
+                      setQty((q) => q + 1);
+                    }}
+                    disabled={!canIncrement}
+                    className="w-11 h-11 grid place-items-center hover:bg-foreground/5 disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Increase"
+                  >
                     <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
                   </button>
                 </div>
+                {stockMsg && (
+                  <p className="mt-2 font-mono text-[11px] text-destructive">{stockMsg}</p>
+                )}
               </div>
 
               {/* CTAs */}
               <div className="space-y-3 pt-2">
                 <button
                   onClick={() => handleAdd(false)}
-                  disabled={outOfStock}
+                  disabled={outOfStock || (remaining !== null && remaining <= 0)}
                   className={cn(
                     "btn-magnetic relative w-full h-14 font-mono text-[11px] tracking-[0.28em] uppercase overflow-hidden border",
-                    outOfStock ? "border-border text-muted-foreground cursor-not-allowed"
+                    (outOfStock || (remaining !== null && remaining <= 0)) ? "border-border text-muted-foreground cursor-not-allowed"
                     : "border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-colors"
                   )}
                 >
-                  <span className={cn("inline-flex items-center gap-2 transition-transform", adding && "-translate-y-full")}>Add to cart</span>
+                  <span className={cn("inline-flex items-center gap-2 transition-transform", adding && "-translate-y-full")}>
+                    {remaining !== null && remaining <= 0 && !outOfStock ? "Max in bag" : "Add to cart"}
+                  </span>
                   <span className={cn("absolute inset-0 inline-flex items-center justify-center gap-2 transition-transform", adding ? "translate-y-0" : "translate-y-full")}>
                     <Check className="w-3.5 h-3.5" /> Added
                   </span>
                 </button>
                 <button
                   onClick={() => handleAdd(true)}
-                  disabled={outOfStock}
+                  disabled={outOfStock || (remaining !== null && remaining <= 0)}
                   className={cn(
                     "btn-magnetic w-full h-14 font-mono text-[11px] tracking-[0.28em] uppercase transition-all",
-                    outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-ember text-ink hover:brightness-110"
+                    (outOfStock || (remaining !== null && remaining <= 0)) ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-ember text-ink hover:brightness-110"
                   )}
                 >
                   {outOfStock ? "Sold out" : "Buy now →"}
                 </button>
               </div>
+
 
               {/* Trust row */}
               <div className="grid grid-cols-3 gap-3 pt-6 border-t border-border">
