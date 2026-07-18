@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
 
     if (!valid) {
       await admin.from("orders")
-        .update({ status: "failed" })
+        .update({ status: "failed", payment_status: "failed", order_status: "cancelled" })
         .eq("razorpay_order_id", b.razorpay_order_id);
       return json({ error: "invalid_signature" }, 400);
     }
@@ -48,11 +48,13 @@ Deno.serve(async (req) => {
     const { data, error } = await admin.from("orders")
       .update({
         status: "paid",
+        payment_status: "paid",
+        order_status: "confirmed",
         razorpay_payment_id: b.razorpay_payment_id,
         razorpay_signature: b.razorpay_signature,
       })
       .eq("razorpay_order_id", b.razorpay_order_id)
-      .select("id,customer_name,email,total,currency,items,shipping_address,status,created_at")
+      .select("id,customer_name,email,total,currency,items,shipping_address,status,payment_method,payment_status,order_status,razorpay_payment_id,razorpay_order_id,cod_fee,shipping,subtotal,created_at")
       .single();
     if (error || !data) return json({ error: "order_not_found" }, 404);
 
