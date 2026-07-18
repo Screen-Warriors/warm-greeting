@@ -62,7 +62,13 @@ function Checkout() {
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(json?.error ?? `request_failed_${res.status}`);
+      if (json?.error === "razorpay_auth_failed") {
+        throw new Error(
+          "Razorpay rejected the API credentials saved in Supabase. Re-save a matching TEST Key ID and TEST Secret in Edge Function secrets, then retry.",
+        );
+      }
+      const detail = typeof json?.detail?.description === "string" ? `: ${json.detail.description}` : "";
+      throw new Error(`${json?.error ?? `request_failed_${res.status}`}${detail}`);
     }
     return json as T;
   };
