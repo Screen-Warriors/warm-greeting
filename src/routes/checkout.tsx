@@ -330,16 +330,17 @@ function Checkout() {
                   value={f.name} onChange={(v) => setField("name", v)}
                   onBlur={() => setTouched((t) => ({ ...t, name: true }))}
                   error={shownErrors.name} placeholder="Nicky Boy" />
-                <Field label="Phone" id="phone" type="tel" autoComplete="tel"
-                  value={f.phone} onChange={(v) => {
-                    const cleaned = v.replace(/[^\d+]/g, "");
-                    const normalized = cleaned.startsWith("+")
-                      ? "+" + cleaned.slice(1).replace(/\+/g, "").slice(0, 12)
-                      : cleaned.replace(/\+/g, "").slice(0, 10);
-                    setField("phone", normalized);
-                  }}
-                  onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
-                  error={shownErrors.phone} placeholder="+91" />
+                <div className="col-span-2">
+                  <PhoneField
+                    id="phone"
+                    label="Phone"
+                    value={f.phone}
+                    onChange={(v) => setField("phone", v)}
+                    onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
+                    touched={!!touched.phone}
+                    error={shownErrors.phone}
+                  />
+                </div>
                 <Field className="col-span-2" label="Address" id="address" autoComplete="street-address"
                   value={f.address} onChange={(v) => setField("address", v)}
                   onBlur={() => setTouched((t) => ({ ...t, address: true }))}
