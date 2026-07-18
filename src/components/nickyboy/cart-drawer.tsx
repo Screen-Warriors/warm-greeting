@@ -1,14 +1,17 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useCart } from "@/lib/cart-store";
 import { Minus, Plus, X, ArrowRight, ShoppingBag } from "lucide-react";
-import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
 
 export function CartDrawer() {
   const { items, open, setOpen, remove, updateQty, subtotal, count } = useCart();
+  const navigate = useNavigate();
 
   const goCheckout = () => {
-    toast.info("Checkout is wired in the next phase (Razorpay + Cloud).");
+    setOpen(false);
+    navigate({ to: "/checkout" });
   };
+
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
