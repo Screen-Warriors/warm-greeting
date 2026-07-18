@@ -56,10 +56,8 @@ function SizeGuideModal() {
 }
 
 export function PurchasePanel() {
-  const { add, setOpen } = useCart();
+  const { add, setOpen, qtyForSize } = useCart();
 
-  // Live product from Supabase (sizes / colors / stock / price). Falls back to
-  // static PRODUCT constants for copy, images, and when the network is down.
   const { data: live } = useQuery({
     queryKey: ["storefront", "product", PRODUCT.id],
     queryFn: async () => {
@@ -96,18 +94,34 @@ export function PurchasePanel() {
   const [size, setSize] = useState<Size | null>(null);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
+  const [stockMsg, setStockMsg] = useState<string | null>(null);
 
   const stockForSize = size ? Number(stockBySize[size] ?? 0) : null;
   const outOfStock = stockForSize === 0;
+  const inCartForSize = size ? qtyForSize(PRODUCT.id, size) : 0;
+  const remaining = stockForSize !== null ? Math.max(0, stockForSize - inCartForSize) : null;
+  const maxAddable = remaining ?? 1;
+  const canIncrement = size !== null && qty < maxAddable;
+
+  // Clamp qty when size changes or stock reduces.
+  if (size && qty > Math.max(1, maxAddable)) {
+    setQty(Math.max(1, maxAddable));
+  }
 
   const handleAdd = (buyNow = false) => {
+    setStockMsg(null);
     if (!size) {
       toast.error("Pick a size first.");
       return;
     }
     if (outOfStock) return;
-    setAdding(true);
-    add({
+    if (remaining !== null && remaining <= 0) {
+      const msg = `Only ${stockForSize} in stock — you've reached the maximum available.`;
+      setStockMsg(msg);
+      toast.error(msg);
+      return;
+    }
+    const res = add({
       productId: PRODUCT.id,
       name: PRODUCT.name,
       size,
@@ -115,7 +129,14 @@ export function PurchasePanel() {
       price,
       quantity: qty,
       image: IMAGES.front,
+      maxStock: stockForSize ?? undefined,
     });
+    if (!res.ok) {
+      setStockMsg(res.error);
+      toast.error(res.error);
+      return;
+    }
+    setAdding(true);
     setTimeout(() => setAdding(false), 900);
     if (buyNow) {
       setOpen(true);
