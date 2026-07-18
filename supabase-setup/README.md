@@ -93,3 +93,17 @@ Toggle Razorpay to Live mode → generate live key id + secret → in Supabase
 to the live values. No code change; no redeploy needed. Register a new live-mode
 webhook in Razorpay pointing at the same URL, and update `RAZORPAY_WEBHOOK_SECRET`
 if you use a different secret for live.
+
+## Migration — international phone fields (July 2026)
+
+Run once in **SQL Editor** to add the new phone columns for existing projects:
+
+```sql
+alter table public.orders
+  add column if not exists country_code       text,
+  add column if not exists phone_number       text,
+  add column if not exists full_phone_number  text;
+```
+
+Then redeploy `create-razorpay-order` and `create-cod-order` (their code now
+writes these three fields on every new order).
