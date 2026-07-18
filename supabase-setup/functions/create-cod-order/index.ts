@@ -89,6 +89,16 @@ Deno.serve(async (req) => {
       .map((it) => `${it.size} × ${it.quantity}`)
       .join(", ");
 
+    // Atomic per-size reservation. Prevents oversell on concurrent COD orders.
+    const { data: rpcRes, error: rpcErr } = await admin.rpc("decrement_stock", {
+      _items: body.items.map((i) => ({ product_id: i.product_id, size: i.size, quantity: i.quantity })),
+    });
+    if (rpcErr) return json({ error: "stock_reserve_failed", detail: rpcErr.message }, 500);
+    if (rpcRes && (rpcRes as { error?: string }).error === "insufficient_stock") {
+      const r = rpcRes as { size: string; available: number };
+      return json({ error: "insufficient_stock", size: r.size, available: r.available }, 400);
+    }
+
     const { data: order, error: oErr } = await admin
       .from("orders")
       .insert({
@@ -109,7 +119,13 @@ Deno.serve(async (req) => {
       })
       .select("id,customer_name,email,total,currency,items,shipping_address,status,payment_method,payment_status,order_status,cod_fee,shipping,subtotal,created_at")
       .single();
-    if (oErr || !order) return json({ error: "order_insert_failed", detail: oErr?.message }, 500);
+    if (oErr || !order) {
+      // Best-effort: try to release the reserved stock back.
+      await admin.rpc("decrement_stock", {
+        _items: body.items.map((i) => ({ product_id: i.product_id, size: i.size, quantity: -i.quantity })),
+      }).catch(() => {});
+      return json({ error: "order_insert_failed", detail: oErr?.message }, 500);
+    }
 
     return json({ ok: true, order });
   } catch (e) {
