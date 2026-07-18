@@ -42,20 +42,16 @@ export function Story() {
 
           <motion.div variants={fadeUp} className="col-span-12 md:col-span-4 space-y-6 md:pt-8">
             <p className="text-lg md:text-xl leading-relaxed text-foreground/85">
-              NICKY BOY started as a sketchbook character — a boy drawn between panels,
-              never quite the main story. On the front of the crewneck he returns as a
-              half-face silhouette, cropped low, looking off the frame.
+              A sketchbook character between panels — never quite the main story.
+              He returns on the chest, half-face, looking off the frame.
             </p>
             <p className="text-base leading-relaxed text-muted-foreground">
-              The column of runes down the chest isn't a language. It's the private
-              alphabet the character used to write in the margins of every page —
-              symbols that mean whatever you're carrying when you wear them.
+              The rune column isn't a language. It's a private alphabet — symbols that
+              mean whatever you're carrying when you wear them.
             </p>
             <p className="text-base leading-relaxed text-muted-foreground">
-              The fit is boxy on purpose. Drop-shouldered, cropped just above the hip,
-              cut so the graphic sits centred over the sternum. Bone-white ribbing at
-              the collar, cuff and hem. A hand-drawn wordmark tucked at the hem, small
-              enough that only you know it's there.
+              Boxy, drop-shouldered, cropped above the hip. Bone-white ribbing.
+              A hand-drawn wordmark at the hem — small enough that only you know.
             </p>
             <div className="pt-4 flex items-center gap-6 border-t border-border">
               <div>
