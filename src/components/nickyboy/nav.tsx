@@ -13,11 +13,20 @@ const NAV = [
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { count, setOpen } = useCart();
 
   useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 24);
+    let lastY = window.scrollY;
+    const on = () => {
+      const y = window.scrollY;
+      setScrolled(y > 24);
+      if (Math.abs(y - lastY) > 6) {
+        setHidden(y > 120 && y > lastY);
+        lastY = y;
+      }
+    };
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
@@ -27,11 +36,13 @@ export function Nav() {
     <>
       <motion.header
         initial={{ y: -24, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        animate={{ y: hidden && !mobileOpen ? -100 : 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "fixed top-0 left-0 right-0 z-40 transition-all duration-500",
-          scrolled ? "bg-background/90 backdrop-blur-xl border-b border-border" : "bg-transparent"
+          "fixed top-0 left-0 right-0 z-40 transition-[background,border,backdrop-filter] duration-500",
+          scrolled
+            ? "bg-background/60 backdrop-blur-2xl border-b border-border/60 supports-[backdrop-filter]:bg-background/40"
+            : "bg-transparent"
         )}
       >
         <div className="mx-auto max-w-[1600px] px-5 md:px-10 flex items-center justify-between h-16 md:h-20">

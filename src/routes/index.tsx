@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Nav } from "@/components/nickyboy/nav";
 import { Hero } from "@/components/nickyboy/hero";
-import { Story, MarqueeBar } from "@/components/nickyboy/story";
+import { MarqueeBar } from "@/components/nickyboy/story";
+import { Story } from "@/components/nickyboy/story";
 import { Gallery } from "@/components/nickyboy/gallery";
 import { PurchasePanel } from "@/components/nickyboy/purchase";
 import { Features } from "@/components/nickyboy/features";
@@ -11,6 +12,8 @@ import { FaqSection } from "@/components/nickyboy/faq";
 import { Newsletter } from "@/components/nickyboy/newsletter";
 import { Footer } from "@/components/nickyboy/footer";
 import { CartDrawer } from "@/components/nickyboy/cart-drawer";
+import { TrustBar } from "@/components/nickyboy/trust-bar";
+import { StickyMobileCTA } from "@/components/nickyboy/sticky-mobile-cta";
 
 export const Route = createFileRoute("/")({ component: Index });
 
@@ -19,17 +22,20 @@ function Index() {
     <main className="min-h-screen bg-background text-foreground">
       <Nav />
       <Hero />
-      <MarqueeBar />
-      <Story />
-      <Gallery />
+      <TrustBar />
       <PurchasePanel />
-      <Features />
       <Reviews />
+      <Story />
+      <MarqueeBar />
+      <Gallery />
+      <Features />
       <Lookbook />
       <FaqSection />
       <Newsletter />
       <Footer />
       <CartDrawer />
+      <StickyMobileCTA />
     </main>
   );
 }
+
