@@ -218,9 +218,9 @@ export function PurchasePanel() {
                   onClick={() => handleAdd(false)}
                   disabled={outOfStock}
                   className={cn(
-                    "relative w-full h-14 font-mono text-[11px] tracking-[0.28em] uppercase overflow-hidden transition-all border",
+                    "btn-magnetic relative w-full h-14 font-mono text-[11px] tracking-[0.28em] uppercase overflow-hidden border",
                     outOfStock ? "border-border text-muted-foreground cursor-not-allowed"
-                    : "border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background"
+                    : "border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background transition-colors"
                   )}
                 >
                   <span className={cn("inline-flex items-center gap-2 transition-transform", adding && "-translate-y-full")}>Add to cart</span>
@@ -232,7 +232,7 @@ export function PurchasePanel() {
                   onClick={() => handleAdd(true)}
                   disabled={outOfStock}
                   className={cn(
-                    "w-full h-14 font-mono text-[11px] tracking-[0.28em] uppercase transition-all",
+                    "btn-magnetic w-full h-14 font-mono text-[11px] tracking-[0.28em] uppercase transition-all",
                     outOfStock ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-ember text-ink hover:brightness-110"
                   )}
                 >
