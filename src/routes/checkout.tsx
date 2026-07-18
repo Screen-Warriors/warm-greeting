@@ -192,7 +192,15 @@ function Checkout() {
 
   const orderPayload = () => ({
     items: items.map((i) => ({ product_id: i.productId, size: i.size, quantity: i.quantity })),
-    customer: { name: f.name, email: f.email, phone: f.phone },
+    customer: {
+      name: f.name,
+      email: f.email,
+      phone: f.phone.e164,
+      country_code: f.phone.countryCode,
+      phone_number: f.phone.national,
+      full_phone_number: f.phone.e164,
+      phone_country: f.phone.country,
+    },
     shipping: { address: f.address, city: f.city, state: f.state, pincode: f.pincode, country: "IN" },
   });
 
