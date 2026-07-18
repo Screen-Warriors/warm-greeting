@@ -5,11 +5,11 @@ import { useCart } from "@/lib/cart-store";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { label: "Shop", href: "#purchase" },
-  { label: "Story", href: "#story" },
   { label: "Size Guide", href: "#size-guide-trigger" },
   { label: "Reviews", href: "#reviews" },
+  { label: "FAQ", href: "#faq" },
 ];
+
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
