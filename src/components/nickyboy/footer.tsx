@@ -65,8 +65,8 @@ export function Footer() {
         <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-border">
           <div className="flex items-center gap-5 text-[11px] font-mono text-muted-foreground">
             <span>© {new Date().getFullYear()} NICKY BOY LABEL PVT. LTD.</span>
-            <a href="#" className="hover:text-foreground">Privacy</a>
-            <a href="#" className="hover:text-foreground">Terms</a>
+            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+            <Link to="/terms" className="hover:text-foreground">Terms</Link>
           </div>
           <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
             <span>Pay with</span>
