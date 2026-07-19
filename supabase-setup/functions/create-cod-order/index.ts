@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
         payment_status: "pending",
         order_status: "confirmed",
       })
-      .select("id,customer_name,email,total,currency,items,shipping_address,status,payment_method,payment_status,order_status,cod_fee,shipping,subtotal,created_at")
+      .select("id,customer_name,email,phone,country_code,phone_number,full_phone_number,total,currency,items,shipping_address,status,payment_method,payment_status,order_status,cod_fee,shipping,subtotal,created_at")
       .single();
     if (oErr || !order) {
       // Best-effort: try to release the reserved stock back.
