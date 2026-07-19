@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import { PRODUCT } from "@/lib/product";
+import { useLivePricing } from "@/lib/use-live-pricing";
 
 export function StickyMobileCTA() {
   const [show, setShow] = useState(false);
