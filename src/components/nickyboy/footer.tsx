@@ -1,4 +1,5 @@
 import { Instagram, Twitter, Youtube } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function Footer() {
   return (
@@ -26,19 +27,20 @@ export function Footer() {
           <div className="col-span-6 md:col-span-2">
             <p className="kicker mb-4">Shop</p>
             <ul className="space-y-3 text-sm">
-              <li><a href="#purchase" className="hover:text-ember transition-colors">Signature Crewneck</a></li>
-              <li><a href="#" className="text-muted-foreground">Archive — soon</a></li>
-              <li><a href="#" className="text-muted-foreground">Gift card</a></li>
+              <li><a href="/#purchase" className="hover:text-ember transition-colors">Signature Crewneck</a></li>
+              <li><a href="/#reviews" className="hover:text-ember transition-colors">Reviews</a></li>
+              <li><a href="/#faq" className="hover:text-ember transition-colors">FAQ</a></li>
             </ul>
           </div>
 
           <div className="col-span-6 md:col-span-2">
             <p className="kicker mb-4">Help</p>
             <ul className="space-y-3 text-sm">
-              <li><a href="#" className="hover:text-ember transition-colors">Size guide</a></li>
-              <li><a href="#" className="hover:text-ember transition-colors">Shipping</a></li>
-              <li><a href="#" className="hover:text-ember transition-colors">Returns</a></li>
-              <li><a href="mailto:care@nickyboy.co" className="hover:text-ember transition-colors">Contact</a></li>
+              <li><Link to="/shipping" className="hover:text-ember transition-colors">Shipping</Link></li>
+              <li><Link to="/returns" className="hover:text-ember transition-colors">Returns & Refunds</Link></li>
+              <li><Link to="/contact" className="hover:text-ember transition-colors">Contact us</Link></li>
+              <li><Link to="/terms" className="hover:text-ember transition-colors">Terms & Conditions</Link></li>
+              <li><Link to="/privacy" className="hover:text-ember transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
 
@@ -63,8 +65,8 @@ export function Footer() {
         <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-border">
           <div className="flex items-center gap-5 text-[11px] font-mono text-muted-foreground">
             <span>© {new Date().getFullYear()} NICKY BOY LABEL PVT. LTD.</span>
-            <a href="#" className="hover:text-foreground">Privacy</a>
-            <a href="#" className="hover:text-foreground">Terms</a>
+            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+            <Link to="/terms" className="hover:text-foreground">Terms</Link>
           </div>
           <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
             <span>Pay with</span>

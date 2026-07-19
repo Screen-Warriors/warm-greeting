@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ShoppingBag, Package, Star, Mail, LogOut } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, Star, Mail, MessageSquare, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAdminAuth } from "@/lib/admin-auth";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
+  { to: "/admin/messages", label: "Messages", icon: MessageSquare },
   { to: "/admin/newsletter", label: "Newsletter", icon: Mail },
 ];
 
