@@ -60,7 +60,7 @@ export const REVIEWS = [
 export const FAQ = [
   { q: "When does this ship?", a: "Every order ships within 48 hours from our Bengaluru studio. Metro deliveries land in 3–5 working days, rest of India 5–8 days. You'll get a tracking link on WhatsApp and email the moment your parcel leaves us." },
   { q: "How does the fit run?", a: "The cut is intentionally boxy and drop-shouldered — pattern-cut for a modern oversized silhouette. If you're between sizes and want a cleaner fit, size down. For a full oversized street look, take your usual size." },
-  { q: "What's the return policy?", a: "Easy 7-day returns on unworn, unwashed pieces with the original tag and dog-tag intact. Exchanges are free within India — we cover both legs of shipping. Reach us at care@nickyboy.co and we'll pick it up." },
+  { q: "What's the return policy?", a: "Easy 7-day returns on unworn, unwashed pieces with the original tag and dog-tag intact. Exchanges are free within India — we cover both legs of shipping. Reach us at care@moneywithgenz.in and we'll pick it up." },
   { q: "Is the print going to crack or fade?", a: "The chest graphic is cured plastisol on garment-dyed heavyweight fleece. Cold wash inside-out, no tumble-dry, and it'll outlast the sweatshirt. We've tested pieces past 60 wash cycles." },
   { q: "Is checkout secure?", a: "Payments run through Razorpay — India's Verified Merchant gateway used by every major D2C brand. UPI, cards, netbanking, and wallets are supported. We never see or store your card details." },
   { q: "Care instructions?", a: "Machine wash cold, inside out, on a gentle cycle. Do not bleach. Dry flat in shade. Iron on reverse side, low heat. Do not iron directly over the print. Wash with similar dark colours the first two cycles." },

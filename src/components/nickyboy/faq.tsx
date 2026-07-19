@@ -20,7 +20,7 @@ export function FaqSection() {
             </h2>
 
             <p className="text-sm text-muted-foreground max-w-xs">
-              Something not covered? Slide into <a href="mailto:care@nickyboy.co" className="text-ember hover:underline">care@nickyboy.co</a> — we reply within 12 hours.
+              Something not covered? Slide into <a href="mailto:care@moneywithgenz.in" className="text-ember hover:underline">care@moneywithgenz.in</a> — we reply within 12 hours.
             </p>
           </motion.div>
 
