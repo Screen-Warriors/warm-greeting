@@ -1,85 +1,12 @@
-// supabase/functions/razorpay-webhook/index.ts
-// Public endpoint — Razorpay POSTs to it. Verify signature before touching data.
-// Secrets required: RAZORPAY_WEBHOOK_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
-// IMPORTANT: In the Supabase Dashboard, when deploying, mark this function as
-//   "Verify JWT: OFF" so Razorpay can call it unauthenticated.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-Deno.serve(async (req) => {
-  if (req.method !== "POST") return new Response("method_not_allowed", { status: 405 });
-
-  const secret = Deno.env.get("RAZORPAY_WEBHOOK_SECRET")?.trim();
-  if (!secret) return new Response("not_configured", { status: 500 });
-
-  const signature = req.headers.get("x-razorpay-signature") ?? "";
-  const raw = await req.text();
-  const expected = await hmacSha256Hex(raw, secret);
-  if (!signature || !timingSafeEqual(expected, signature)) {
-    return new Response("invalid_signature", { status: 401 });
-  }
-
-  const evt = JSON.parse(raw) as {
-    event: string;
-    payload: { payment: { entity: { order_id: string; id: string; status: string } } };
-  };
-
-  const admin = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    { auth: { persistSession: false } },
-  );
-
-  const p = evt.payload?.payment?.entity;
-  if (!p?.order_id) return new Response("ok"); // ignore unrelated events
-
-  if (evt.event === "payment.captured") {
-    // Only escalate to paid if not already paid — client verify may have won the race.
-    await admin.from("orders")
-      .update({ status: "paid", payment_status: "paid", order_status: "confirmed", razorpay_payment_id: p.id })
-      .eq("razorpay_order_id", p.order_id)
-      .neq("status", "paid");
-
-    // Backstop email dispatch. sendOrderEmails is idempotent per order_id.
-    const { data: order } = await admin.from("orders")
-      .select("id,customer_name,email,phone,full_phone_number,shipping_address,items,subtotal,shipping,cod_fee,total,currency,payment_method,payment_status,order_status,razorpay_payment_id,razorpay_order_id,created_at")
-      .eq("razorpay_order_id", p.order_id)
-      .maybeSingle();
-    if (order) {
-      try { await sendOrderEmails(order as never); } catch (e) { console.error("sendOrderEmails threw:", e); }
-    }
-  } else if (evt.event === "payment.failed") {
-    await admin.from("orders")
-      .update({ status: "failed", razorpay_payment_id: p.id })
-      .eq("razorpay_order_id", p.order_id)
-      .neq("status", "paid");
-  }
-
-  return new Response("ok");
-});
-
-async function hmacSha256Hex(msg: string, secret: string) {
-  const key = await crypto.subtle.importKey(
-    "raw", new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(msg));
-  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-function timingSafeEqual(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let out = 0;
-  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return out === 0;
-}
-
-// ===== Inlined from _shared/order-emails.ts =====
 // Shared: send owner + customer emails via Resend after a paid order.
 // Never throws — logs failures to the `email_logs` table so ops can retry.
 // Import in each Edge Function that confirms a paid order.
 
-import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-const OWNER_EMAIL = Deno.env.get("OWNER_NOTIFY_EMAIL")?.trim() || "moneywithgenz@gmail.com";
-const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL")?.trim() || "NICKY BOY <orders@moneywithgenz.com>";
-const SUPPORT_EMAIL = "hello@moneywithgenz.co";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+
+export const OWNER_EMAIL = Deno.env.get("OWNER_NOTIFY_EMAIL")?.trim() || "moneywithgenz@gmail.com";
+export const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL")?.trim() || "NICKY BOY <orders@moneywithgenz.com>";
+export const SUPPORT_EMAIL = "hello@moneywithgenz.co";
 
 type OrderItem = {
   product_id?: string;
@@ -274,7 +201,7 @@ async function logEmail(admin: SupabaseClient, row: {
 }
 
 // Idempotent: only sends if no `owner_notify` log row exists for this order.
-async function sendOrderEmails(order: OrderRow): Promise<void> {
+export async function sendOrderEmails(order: OrderRow): Promise<void> {
   const admin = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,

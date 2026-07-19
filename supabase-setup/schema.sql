@@ -249,3 +249,24 @@ create policy "anyone can submit a contact form" on public.contact_submissions
 drop trigger if exists trg_contact_submissions_updated_at on public.contact_submissions;
 create trigger trg_contact_submissions_updated_at before update on public.contact_submissions
   for each row execute function public.set_updated_at();
+
+-- ---------- EMAIL LOGS ----------
+-- Records every transactional email send (owner notification + customer confirmation).
+-- Used both for ops visibility and as an idempotency guard so retries don't double-send.
+create table if not exists public.email_logs (
+  id             uuid primary key default gen_random_uuid(),
+  order_id       uuid references public.orders(id) on delete cascade,
+  email_type     text not null,       -- 'owner_notify' | 'customer_confirmation'
+  recipient      text not null,
+  status         text not null,       -- 'sent' | 'failed'
+  provider_id    text,                -- Resend message id
+  error_message  text,
+  sent_at        timestamptz not null default now()
+);
+
+create index if not exists email_logs_order_idx on public.email_logs(order_id, email_type, status);
+create index if not exists email_logs_sent_idx  on public.email_logs(sent_at desc);
+
+grant all on public.email_logs to service_role;
+alter table public.email_logs enable row level security;
+-- Client cannot read or write. Only Edge Functions (service_role) touch this table.

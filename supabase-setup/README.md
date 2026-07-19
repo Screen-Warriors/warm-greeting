@@ -40,6 +40,9 @@ Add these three:
 | `RAZORPAY_KEY_ID` | your Razorpay TEST Key ID, e.g. `rzp_test_...` |
 | `RAZORPAY_KEY_SECRET` | your matching Razorpay TEST Key Secret from the same generated key pair |
 | `RAZORPAY_WEBHOOK_SECRET` | pick any strong random string; you'll paste the same value into Razorpay in Step 4 |
+| `RESEND_API_KEY` | your Resend API key (`re_...`) — required for order-confirmation emails |
+| `RESEND_FROM_EMAIL` | *(optional)* e.g. `NICKY BOY <orders@moneywithgenz.com>`. Must be a **verified sending domain** in Resend. Defaults to that value. |
+| `OWNER_NOTIFY_EMAIL` | *(optional)* store-owner notification recipient. Defaults to `moneywithgenz@gmail.com`. |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are auto-injected — do not add them.
 
