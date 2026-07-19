@@ -161,6 +161,13 @@ function customerHtml(o: OrderRow): string {
           <div style="font-size:14px;color:#c9c6bf;">5–8 business days for metros, 7–12 days elsewhere in India.</div>
         </td></tr>
 
+        <tr><td style="padding:20px 32px 8px;text-align:center;">
+          <a href="${SITE_URL}/track-order?order=${encodeURIComponent(o.id)}&email=${encodeURIComponent(o.email)}"
+             style="display:inline-block;padding:14px 28px;background:#c0674a;color:#0a0a0a;font-family:Arial,sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;text-decoration:none;font-weight:bold;">
+            Track Your Order
+          </a>
+        </td></tr>
+
         <tr><td style="padding:24px 32px 32px;border-top:1px solid #222;text-align:center;">
           <div style="font-size:12px;color:#8a877f;line-height:1.7;">
             Questions? Write to <a href="mailto:${SUPPORT_EMAIL}" style="color:#c0674a;text-decoration:none;">${SUPPORT_EMAIL}</a><br>
