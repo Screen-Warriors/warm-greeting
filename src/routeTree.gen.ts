@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrackOrderRouteImport } from './routes/track-order'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ShippingRouteImport } from './routes/shipping'
 import { Route as ReturnsRouteImport } from './routes/returns'
@@ -27,6 +28,11 @@ import { Route as AdminProductsIndexRouteImport } from './routes/admin.products.
 import { Route as AdminProductsIdRouteImport } from './routes/admin.products.$id'
 import { Route as AdminOrdersIdRouteImport } from './routes/admin.orders.$id'
 
+const TrackOrderRoute = TrackOrderRouteImport.update({
+  id: '/track-order',
+  path: '/track-order',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/returns': typeof ReturnsRoute
   '/shipping': typeof ShippingRoute
   '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/returns': typeof ReturnsRoute
   '/shipping': typeof ShippingRoute
   '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/returns': typeof ReturnsRoute
   '/shipping': typeof ShippingRoute
   '/terms': typeof TermsRoute
+  '/track-order': typeof TrackOrderRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
   '/admin/orders': typeof AdminOrdersRouteWithChildren
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/shipping'
     | '/terms'
+    | '/track-order'
     | '/admin/messages'
     | '/admin/newsletter'
     | '/admin/orders'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/shipping'
     | '/terms'
+    | '/track-order'
     | '/admin/messages'
     | '/admin/newsletter'
     | '/admin/orders'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/returns'
     | '/shipping'
     | '/terms'
+    | '/track-order'
     | '/admin/messages'
     | '/admin/newsletter'
     | '/admin/orders'
@@ -238,11 +250,19 @@ export interface RootRouteChildren {
   ReturnsRoute: typeof ReturnsRoute
   ShippingRoute: typeof ShippingRoute
   TermsRoute: typeof TermsRoute
+  TrackOrderRoute: typeof TrackOrderRoute
   OrderOrderIdRoute: typeof OrderOrderIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/track-order': {
+      id: '/track-order'
+      path: '/track-order'
+      fullPath: '/track-order'
+      preLoaderRoute: typeof TrackOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -408,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReturnsRoute: ReturnsRoute,
   ShippingRoute: ShippingRoute,
   TermsRoute: TermsRoute,
+  TrackOrderRoute: TrackOrderRoute,
   OrderOrderIdRoute: OrderOrderIdRoute,
 }
 export const routeTree = rootRouteImport
