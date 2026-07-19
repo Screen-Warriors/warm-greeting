@@ -1,11 +1,12 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, Truck, Zap, Package, ShieldCheck } from "lucide-react";
 import { IMAGES, PRODUCT } from "@/lib/product";
+import { supabase } from "@/integrations/supabase/client";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const LOW_STOCK = Object.values(PRODUCT.stockBySize).reduce((a, b) => a + b, 0);
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
