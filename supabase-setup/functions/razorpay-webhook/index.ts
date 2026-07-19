@@ -36,9 +36,18 @@ Deno.serve(async (req) => {
   if (evt.event === "payment.captured") {
     // Only escalate to paid if not already paid — client verify may have won the race.
     await admin.from("orders")
-      .update({ status: "paid", razorpay_payment_id: p.id })
+      .update({ status: "paid", payment_status: "paid", order_status: "confirmed", razorpay_payment_id: p.id })
       .eq("razorpay_order_id", p.order_id)
       .neq("status", "paid");
+
+    // Backstop email dispatch. sendOrderEmails is idempotent per order_id.
+    const { data: order } = await admin.from("orders")
+      .select("id,customer_name,email,phone,full_phone_number,shipping_address,items,subtotal,shipping,cod_fee,total,currency,payment_method,payment_status,order_status,razorpay_payment_id,razorpay_order_id,created_at")
+      .eq("razorpay_order_id", p.order_id)
+      .maybeSingle();
+    if (order) {
+      try { await sendOrderEmails(order as never); } catch (e) { console.error("sendOrderEmails threw:", e); }
+    }
   } else if (evt.event === "payment.failed") {
     await admin.from("orders")
       .update({ status: "failed", razorpay_payment_id: p.id })
