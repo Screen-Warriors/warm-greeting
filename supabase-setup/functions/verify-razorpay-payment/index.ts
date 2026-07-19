@@ -72,6 +72,9 @@ Deno.serve(async (req) => {
       console.error("decrement_stock threw:", e);
     }
 
+    // Fire-and-forget email notifications. Never block the confirmation on this.
+    try { await sendOrderEmails(data as never); } catch (e) { console.error("sendOrderEmails threw:", e); }
+
     return json({ ok: true, order: data });
   } catch (e) {
     return json({ error: "server_error", detail: String(e) }, 500);
