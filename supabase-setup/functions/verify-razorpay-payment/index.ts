@@ -1,6 +1,7 @@
 // supabase/functions/verify-razorpay-payment/index.ts
 // Secrets required: RAZORPAY_KEY_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { sendOrderEmails } from "../_shared/order-emails.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
