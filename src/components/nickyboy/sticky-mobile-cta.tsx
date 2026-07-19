@@ -34,10 +34,12 @@ export function StickyMobileCTA() {
                 NICKY BOY · Drop 001
               </p>
               <p className="font-display text-xl leading-none mt-1">
-                {PRODUCT.currency}{PRODUCT.price.toLocaleString("en-IN")}
-                <span className="font-mono text-[11px] ml-2 line-through text-muted-foreground">
-                  {PRODUCT.currency}{PRODUCT.compareAt.toLocaleString("en-IN")}
-                </span>
+                {pricing.currency}{pricing.price.toLocaleString("en-IN")}
+                {pricing.compareAt > pricing.price && (
+                  <span className="font-mono text-[11px] ml-2 line-through text-muted-foreground">
+                    {pricing.currency}{pricing.compareAt.toLocaleString("en-IN")}
+                  </span>
+                )}
               </p>
             </div>
             <a
