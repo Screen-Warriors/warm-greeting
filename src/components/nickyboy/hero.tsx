@@ -1,11 +1,12 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, Truck, Zap, Package, ShieldCheck } from "lucide-react";
 import { IMAGES, PRODUCT } from "@/lib/product";
+import { supabase } from "@/integrations/supabase/client";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const LOW_STOCK = Object.values(PRODUCT.stockBySize).reduce((a, b) => a + b, 0);
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
@@ -14,6 +15,28 @@ export function Hero() {
   const opacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
   const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
+
+  const { data: stockData, isSuccess } = useQuery({
+    queryKey: ["storefront", "product", PRODUCT.id, "stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("stock_by_size")
+        .eq("id", PRODUCT.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+  const totalStock = isSuccess && stockData?.stock_by_size
+    ? Object.values(stockData.stock_by_size as Record<string, number>)
+        .reduce((a, b) => a + (Number(b) || 0), 0)
+    : null;
+  const showBadge = totalStock !== null;
+  const soldOut = totalStock === 0;
+
 
   return (
     <section
@@ -47,22 +70,29 @@ export function Hero() {
         <span className="kicker text-foreground/80">The Signature Drop / 001</span>
       </motion.div>
 
-      {/* Floating low-stock badge */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, x: 20 }}
-        animate={{ opacity: 1, scale: 1, x: 0 }}
-        transition={{ delay: 1.2, duration: 0.7, ease: EASE }}
-        className="hidden md:flex absolute top-28 right-10 z-10 items-center gap-3 pl-3 pr-4 py-2.5 bg-background/70 backdrop-blur-xl border border-ember/40"
-        style={{ animation: "soft-float 4s ease-in-out infinite" }}
-      >
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-ember opacity-70 animate-ping" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-ember" />
-        </span>
-        <span className="font-mono text-[10px] tracking-[0.24em] uppercase">
-          Only <span className="text-ember">{LOW_STOCK}</span> pieces left
-        </span>
-      </motion.div>
+      {/* Floating low-stock badge — hidden until real stock loads */}
+      {showBadge && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, x: 20 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.7, ease: EASE }}
+          className="hidden md:flex absolute top-28 right-10 z-10 items-center gap-3 pl-3 pr-4 py-2.5 bg-background/70 backdrop-blur-xl border border-ember/40"
+          style={{ animation: "soft-float 4s ease-in-out infinite" }}
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-ember opacity-70 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-ember" />
+          </span>
+          <span className="font-mono text-[10px] tracking-[0.24em] uppercase">
+            {soldOut ? (
+              <span className="text-ember">Sold out</span>
+            ) : (
+              <>Only <span className="text-ember">{totalStock}</span> pieces left</>
+            )}
+          </span>
+        </motion.div>
+      )}
+
 
       {/* Content column */}
       <motion.div
