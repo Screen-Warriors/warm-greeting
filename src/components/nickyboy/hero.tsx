@@ -16,6 +16,28 @@ export function Hero() {
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
   const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
 
+  const { data: stockData, isSuccess } = useQuery({
+    queryKey: ["storefront", "product", PRODUCT.id, "stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("stock_by_size")
+        .eq("id", PRODUCT.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+  const totalStock = isSuccess && stockData?.stock_by_size
+    ? Object.values(stockData.stock_by_size as Record<string, number>)
+        .reduce((a, b) => a + (Number(b) || 0), 0)
+    : null;
+  const showBadge = totalStock !== null;
+  const soldOut = totalStock === 0;
+
+
   return (
     <section
       ref={ref}
