@@ -70,22 +70,29 @@ export function Hero() {
         <span className="kicker text-foreground/80">The Signature Drop / 001</span>
       </motion.div>
 
-      {/* Floating low-stock badge */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9, x: 20 }}
-        animate={{ opacity: 1, scale: 1, x: 0 }}
-        transition={{ delay: 1.2, duration: 0.7, ease: EASE }}
-        className="hidden md:flex absolute top-28 right-10 z-10 items-center gap-3 pl-3 pr-4 py-2.5 bg-background/70 backdrop-blur-xl border border-ember/40"
-        style={{ animation: "soft-float 4s ease-in-out infinite" }}
-      >
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full rounded-full bg-ember opacity-70 animate-ping" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-ember" />
-        </span>
-        <span className="font-mono text-[10px] tracking-[0.24em] uppercase">
-          Only <span className="text-ember">{LOW_STOCK}</span> pieces left
-        </span>
-      </motion.div>
+      {/* Floating low-stock badge — hidden until real stock loads */}
+      {showBadge && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, x: 20 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.7, ease: EASE }}
+          className="hidden md:flex absolute top-28 right-10 z-10 items-center gap-3 pl-3 pr-4 py-2.5 bg-background/70 backdrop-blur-xl border border-ember/40"
+          style={{ animation: "soft-float 4s ease-in-out infinite" }}
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-ember opacity-70 animate-ping" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-ember" />
+          </span>
+          <span className="font-mono text-[10px] tracking-[0.24em] uppercase">
+            {soldOut ? (
+              <span className="text-ember">Sold out</span>
+            ) : (
+              <>Only <span className="text-ember">{totalStock}</span> pieces left</>
+            )}
+          </span>
+        </motion.div>
+      )}
+
 
       {/* Content column */}
       <motion.div
