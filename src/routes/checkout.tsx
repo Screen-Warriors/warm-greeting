@@ -155,7 +155,7 @@ function Checkout() {
     return out;
   }, [errors, touched]);
 
-  const shipping = subtotal >= 2500 ? 0 : 99;
+  const shipping = 0;
   const codFee = method === "cod" ? COD_FEE : 0;
   const discount = 0;
   const total = subtotal + shipping + codFee - discount;
