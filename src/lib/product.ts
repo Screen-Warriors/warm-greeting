@@ -1,16 +1,16 @@
-import heroModel from "@/assets/hero-model.png.asset.json";
-import productFront from "@/assets/product-front.png.asset.json";
-import productBack from "@/assets/product-back.png.asset.json";
-import lifestyleSitting from "@/assets/lifestyle-sitting.jpg.asset.json";
-import lifestyleLeaning from "@/assets/lifestyle-leaning.jpg.asset.json";
+import heroModel from "@/assets/hero-model.png";
+import productFront from "@/assets/product-front.png";
+import productBack from "@/assets/product-back.png";
+import lifestyleSitting from "@/assets/lifestyle-sitting.jpg";
+import lifestyleLeaning from "@/assets/lifestyle-leaning.jpg";
 import detailPrint from "@/assets/detail-print.jpg";
 
 export const IMAGES = {
-  hero: heroModel.url,
-  front: productFront.url,
-  back: productBack.url,
-  sitting: lifestyleSitting.url,
-  leaning: lifestyleLeaning.url,
+  hero: heroModel,
+  front: productFront,
+  back: productBack,
+  sitting: lifestyleSitting,
+  leaning: lifestyleLeaning,
   detail: detailPrint,
 };
 
