@@ -70,6 +70,13 @@ alter table public.orders add column if not exists cod_fee integer not null defa
 alter table public.orders add column if not exists payment_method text not null default 'razorpay';
 alter table public.orders add column if not exists payment_status text not null default 'pending';
 alter table public.orders add column if not exists order_status text not null default 'pending';
+alter table public.orders add column if not exists tracking_number text;
+alter table public.orders add column if not exists tracking_courier text;
+alter table public.orders add column if not exists tracking_url text;
+alter table public.orders add column if not exists country_code text;
+alter table public.orders add column if not exists phone_number text;
+alter table public.orders add column if not exists full_phone_number text;
+alter table public.orders add column if not exists sizes text;
 
 create index if not exists orders_razorpay_order_id_idx on public.orders(razorpay_order_id);
 create index if not exists orders_email_idx on public.orders(email);
