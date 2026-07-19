@@ -293,7 +293,7 @@ Deno.serve(async (req) => {
         image: (p.images as string[])?.[0] ?? null,
       });
     }
-    const shipping = subtotal >= 2500 ? 0 : 99;
+    const shipping = 0;
     const cod_fee = COD_FEE;
     const total = subtotal + shipping + cod_fee;
     const currency = (products?.[0]?.currency as string) ?? "INR";
