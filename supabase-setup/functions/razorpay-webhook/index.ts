@@ -4,6 +4,7 @@
 // IMPORTANT: In the Supabase Dashboard, when deploying, mark this function as
 //   "Verify JWT: OFF" so Razorpay can call it unauthenticated.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { sendOrderEmails } from "../_shared/order-emails.ts";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("method_not_allowed", { status: 405 });
