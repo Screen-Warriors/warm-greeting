@@ -128,6 +128,9 @@ Deno.serve(async (req) => {
       return json({ error: "order_insert_failed", detail: oErr?.message }, 500);
     }
 
+    // Fire-and-forget: COD orders are confirmed at creation, so email now.
+    try { await sendOrderEmails(order as never); } catch (e) { console.error("sendOrderEmails threw:", e); }
+
     return json({ ok: true, order });
   } catch (e) {
     return json({ error: "server_error", detail: String(e) }, 500);
