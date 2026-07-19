@@ -138,14 +138,18 @@ export function Hero() {
               className="mt-8 md:mt-10 flex flex-wrap items-baseline gap-x-6 gap-y-2"
             >
               <span className="font-display text-4xl md:text-5xl text-bone leading-none">
-                {PRODUCT.currency}{PRODUCT.price.toLocaleString("en-IN")}
+                {pricing.currency}{pricing.price.toLocaleString("en-IN")}
               </span>
-              <span className="font-mono text-sm line-through text-muted-foreground">
-                {PRODUCT.currency}{PRODUCT.compareAt.toLocaleString("en-IN")}
-              </span>
-              <span className="font-mono text-[10px] tracking-[0.24em] uppercase px-2 py-1 border border-ember/50 text-ember">
-                Save 75%
-              </span>
+              {pricing.compareAt > pricing.price && (
+                <>
+                  <span className="font-mono text-sm line-through text-muted-foreground">
+                    {pricing.currency}{pricing.compareAt.toLocaleString("en-IN")}
+                  </span>
+                  <span className="font-mono text-[10px] tracking-[0.24em] uppercase px-2 py-1 border border-ember/50 text-ember">
+                    Save {pricing.discountPct}%
+                  </span>
+                </>
+              )}
             </motion.div>
 
             {/* CTAs + trust chips */}
