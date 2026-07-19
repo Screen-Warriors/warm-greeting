@@ -270,3 +270,49 @@ create index if not exists email_logs_sent_idx  on public.email_logs(sent_at des
 grant all on public.email_logs to service_role;
 alter table public.email_logs enable row level security;
 -- Client cannot read or write. Only Edge Functions (service_role) touch this table.
+
+-- ---------- ORDER LOOKUP (guest tracking) ----------
+-- Anyone can call this, but must supply BOTH the order id AND the exact email
+-- to receive a row back. Sensitive columns (razorpay signature, etc.) are
+-- excluded from the returned payload.
+create or replace function public.lookup_order(_id uuid, _email text)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'id', o.id,
+    'customer_name', o.customer_name,
+    'email', o.email,
+    'shipping_address', o.shipping_address,
+    'items', o.items,
+    'subtotal', o.subtotal,
+    'shipping', o.shipping,
+    'cod_fee', o.cod_fee,
+    'total', o.total,
+    'currency', o.currency,
+    'status', o.status,
+    'payment_method', o.payment_method,
+    'payment_status', o.payment_status,
+    'order_status', o.order_status,
+    'tracking_number', o.tracking_number,
+    'tracking_courier', o.tracking_courier,
+    'tracking_url', o.tracking_url,
+    'created_at', o.created_at,
+    'updated_at', o.updated_at
+  )
+  from public.orders o
+  where o.id = _id
+    and lower(trim(o.email)) = lower(trim(_email))
+  limit 1
+$$;
+
+-- Optional tracking columns (idempotent add for existing DBs).
+alter table public.orders add column if not exists tracking_number text;
+alter table public.orders add column if not exists tracking_courier text;
+alter table public.orders add column if not exists tracking_url text;
+
+revoke all on function public.lookup_order(uuid, text) from public;
+grant execute on function public.lookup_order(uuid, text) to anon, authenticated;

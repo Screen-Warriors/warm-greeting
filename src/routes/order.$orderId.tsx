@@ -174,12 +174,13 @@ function OrderConfirmation() {
           >
             Continue shopping
           </Link>
-          <a
-            href={`mailto:orders@nickyboy.co?subject=Track%20order%20${orderId}`}
+          <Link
+            to="/track-order"
+            search={{ order: orderId, email: order?.email }}
             className="inline-block font-mono text-[11px] tracking-[0.28em] uppercase bg-ember text-ink rounded-md px-6 py-3 hover:brightness-110 transition"
           >
             Track order
-          </a>
+          </Link>
         </div>
       </div>
     </main>

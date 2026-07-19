@@ -36,6 +36,7 @@ export function Footer() {
           <div className="col-span-6 md:col-span-2">
             <p className="kicker mb-4">Help</p>
             <ul className="space-y-3 text-sm">
+              <li><Link to="/track-order" className="hover:text-ember transition-colors">Track order</Link></li>
               <li><Link to="/shipping" className="hover:text-ember transition-colors">Shipping</Link></li>
               <li><Link to="/returns" className="hover:text-ember transition-colors">Returns & Refunds</Link></li>
               <li><Link to="/contact" className="hover:text-ember transition-colors">Contact us</Link></li>

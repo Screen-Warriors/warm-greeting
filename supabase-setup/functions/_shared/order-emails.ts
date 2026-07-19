@@ -7,6 +7,7 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 export const OWNER_EMAIL = Deno.env.get("OWNER_NOTIFY_EMAIL")?.trim() || "moneywithgenz@gmail.com";
 export const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL")?.trim() || "NICKY BOY <orders@moneywithgenz.com>";
 export const SUPPORT_EMAIL = "hello@moneywithgenz.co";
+export const SITE_URL = Deno.env.get("SITE_URL")?.trim().replace(/\/$/, "") || "https://nickyboy.co";
 
 type OrderItem = {
   product_id?: string;
@@ -158,6 +159,13 @@ function customerHtml(o: OrderRow): string {
         <tr><td style="padding:16px 32px 8px;">
           <div style="font-size:11px;letter-spacing:2px;color:#8a877f;text-transform:uppercase;margin-bottom:8px;">Estimated delivery</div>
           <div style="font-size:14px;color:#c9c6bf;">5–8 business days for metros, 7–12 days elsewhere in India.</div>
+        </td></tr>
+
+        <tr><td style="padding:20px 32px 8px;text-align:center;">
+          <a href="${SITE_URL}/track-order?order=${encodeURIComponent(o.id)}&email=${encodeURIComponent(o.email)}"
+             style="display:inline-block;padding:14px 28px;background:#c0674a;color:#0a0a0a;font-family:Arial,sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;text-decoration:none;font-weight:bold;">
+            Track Your Order
+          </a>
         </td></tr>
 
         <tr><td style="padding:24px 32px 32px;border-top:1px solid #222;text-align:center;">
