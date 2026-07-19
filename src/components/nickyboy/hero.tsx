@@ -16,6 +16,8 @@ export function Hero() {
   const opacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
   const textY = useTransform(scrollYProgress, [0, 1], [0, -60]);
+  const pricing = useLivePricing();
+
 
   const { data: stockData, isSuccess } = useQuery({
     queryKey: ["storefront", "product", PRODUCT.id, "stock"],
