@@ -7,7 +7,7 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 export const OWNER_EMAIL = Deno.env.get("OWNER_NOTIFY_EMAIL")?.trim() || "moneywithgenz@gmail.com";
 export const FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL")?.trim() || "NICKY BOY <orders@moneywithgenz.com>";
 export const SUPPORT_EMAIL = "hello@moneywithgenz.co";
-export const SITE_URL = Deno.env.get("SITE_URL")?.trim().replace(/\/$/, "") || "https://nickyboy.co";
+export const SITE_URL = Deno.env.get("SITE_URL")?.trim().replace(/\/$/, "") || "https://moneywithgenz.in";
 
 type OrderItem = {
   product_id?: string;

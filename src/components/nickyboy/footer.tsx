@@ -51,7 +51,7 @@ export function Footer() {
               NICKY BOY / Studio 3F<br/>
               Indiranagar, Bengaluru<br/>
               India — 560038<br/>
-              <a href="mailto:hello@nickyboy.co" className="text-foreground hover:text-ember transition-colors mt-2 inline-block">hello@nickyboy.co</a>
+              <a href="mailto:hello@moneywithgenz.in" className="text-foreground hover:text-ember transition-colors mt-2 inline-block">hello@moneywithgenz.in</a>
             </address>
           </div>
         </div>
