@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
         razorpay_signature: b.razorpay_signature,
       })
       .eq("razorpay_order_id", b.razorpay_order_id)
-      .select("id,customer_name,email,total,currency,items,shipping_address,status,payment_method,payment_status,order_status,razorpay_payment_id,razorpay_order_id,cod_fee,shipping,subtotal,created_at")
+      .select("id,customer_name,email,phone,country_code,phone_number,full_phone_number,total,currency,items,shipping_address,status,payment_method,payment_status,order_status,razorpay_payment_id,razorpay_order_id,cod_fee,shipping,subtotal,created_at")
       .single();
     if (error || !data) return json({ error: "order_not_found" }, 404);
 
