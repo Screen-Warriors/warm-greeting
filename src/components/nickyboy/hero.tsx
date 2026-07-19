@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, Truck, Zap, Package, ShieldCheck } from "lucide-react";
 import { IMAGES, PRODUCT } from "@/lib/product";
 import { supabase } from "@/integrations/supabase/client";
+import { useLivePricing } from "@/lib/use-live-pricing";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
