@@ -27,19 +27,20 @@ export function Footer() {
           <div className="col-span-6 md:col-span-2">
             <p className="kicker mb-4">Shop</p>
             <ul className="space-y-3 text-sm">
-              <li><a href="#purchase" className="hover:text-ember transition-colors">Signature Crewneck</a></li>
-              <li><a href="#" className="text-muted-foreground">Archive — soon</a></li>
-              <li><a href="#" className="text-muted-foreground">Gift card</a></li>
+              <li><a href="/#purchase" className="hover:text-ember transition-colors">Signature Crewneck</a></li>
+              <li><a href="/#reviews" className="hover:text-ember transition-colors">Reviews</a></li>
+              <li><a href="/#faq" className="hover:text-ember transition-colors">FAQ</a></li>
             </ul>
           </div>
 
           <div className="col-span-6 md:col-span-2">
             <p className="kicker mb-4">Help</p>
             <ul className="space-y-3 text-sm">
-              <li><a href="#" className="hover:text-ember transition-colors">Size guide</a></li>
-              <li><a href="#" className="hover:text-ember transition-colors">Shipping</a></li>
-              <li><a href="#" className="hover:text-ember transition-colors">Returns</a></li>
-              <li><a href="mailto:care@nickyboy.co" className="hover:text-ember transition-colors">Contact</a></li>
+              <li><Link to="/shipping" className="hover:text-ember transition-colors">Shipping</Link></li>
+              <li><Link to="/returns" className="hover:text-ember transition-colors">Returns & Refunds</Link></li>
+              <li><Link to="/contact" className="hover:text-ember transition-colors">Contact us</Link></li>
+              <li><Link to="/terms" className="hover:text-ember transition-colors">Terms & Conditions</Link></li>
+              <li><Link to="/privacy" className="hover:text-ember transition-colors">Privacy Policy</Link></li>
             </ul>
           </div>
 
