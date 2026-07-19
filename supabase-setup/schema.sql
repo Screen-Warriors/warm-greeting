@@ -210,3 +210,42 @@ end $$;
 
 revoke all on function public.decrement_stock(jsonb) from public, anon, authenticated;
 grant execute on function public.decrement_stock(jsonb) to service_role;
+
+-- ---------- CONTACT SUBMISSIONS ----------
+create table if not exists public.contact_submissions (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null,
+  email       text not null,
+  phone       text,
+  subject     text not null,
+  message     text not null,
+  status      text not null default 'unread',  -- 'unread' | 'read' | 'replied' | 'archived'
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  constraint contact_submissions_name_len check (char_length(name) between 2 and 100),
+  constraint contact_submissions_email_len check (char_length(email) between 3 and 255),
+  constraint contact_submissions_subject_len check (char_length(subject) between 1 and 120),
+  constraint contact_submissions_message_len check (char_length(message) between 10 and 2000),
+  constraint contact_submissions_status_chk check (status in ('unread','read','replied','archived'))
+);
+
+create index if not exists contact_submissions_status_idx on public.contact_submissions(status);
+create index if not exists contact_submissions_created_idx on public.contact_submissions(created_at desc);
+
+grant insert on public.contact_submissions to anon, authenticated;
+grant all on public.contact_submissions to service_role;
+
+alter table public.contact_submissions enable row level security;
+
+drop policy if exists "anyone can submit a contact form" on public.contact_submissions;
+create policy "anyone can submit a contact form" on public.contact_submissions
+  for insert to anon, authenticated with check (
+    char_length(name) between 2 and 100
+    and char_length(email) between 3 and 255
+    and char_length(subject) between 1 and 120
+    and char_length(message) between 10 and 2000
+  );
+
+drop trigger if exists trg_contact_submissions_updated_at on public.contact_submissions;
+create trigger trg_contact_submissions_updated_at before update on public.contact_submissions
+  for each row execute function public.set_updated_at();
