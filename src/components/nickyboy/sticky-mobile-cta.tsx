@@ -6,6 +6,8 @@ import { useLivePricing } from "@/lib/use-live-pricing";
 
 export function StickyMobileCTA() {
   const [show, setShow] = useState(false);
+  const pricing = useLivePricing();
+
 
   useEffect(() => {
     const on = () => {
